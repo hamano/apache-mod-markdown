@@ -16,6 +16,8 @@ APACHECTL=apachectl
 #DEFS=-Dmy_define=my_value
 #INCLUDES=-Imy/include/dir
 #LIBS=-Lmy/lib/dir -lmylib
+INCLUDES=-I/home/hamano/local/discount-2.0.4beta4
+LDFLAGS=-L/home/hamano/local/discount-2.0.4beta4 -lmarkdown
 
 #   the default target
 all: local-shared-build
