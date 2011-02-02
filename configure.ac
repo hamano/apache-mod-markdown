@@ -3,6 +3,7 @@ AC_INIT(mod_markdown, 0.1)
 
 # Automake initialization
 AM_INIT_AUTOMAKE(dist-bzip2)
+AM_CONFIG_HEADER(config.h)
 
 # Add a test for a compiler.
 AC_PROG_CC

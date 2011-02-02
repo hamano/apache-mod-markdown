@@ -19,4 +19,7 @@ in httpd.conf:
     LoadModule markdown_module modules/mod_markdown.so
     <Location /markdown>
         AddHandler markdown .md
+
+	# If you want to use stylesheet.
+	MarkdownCss style.css
     </Location>

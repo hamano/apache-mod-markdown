@@ -45,7 +45,15 @@
 
 #include "markdown.h"
 
+module AP_MODULE_DECLARE_DATA markdown_module;
+
+typedef struct{
+    const char *css;
+}markdown_conf;
+
 extern char *mkd_doc_title(Document *);
+
+#define P(s) ap_rputs(s, r)
 
 void markdown_output(Document *doc, request_rec *r)
 {
@@ -53,20 +61,35 @@ void markdown_output(Document *doc, request_rec *r)
 	int ret;
 	int size;
 	char *p;
+	markdown_conf *conf;
 
+	conf = (markdown_conf *)ap_get_module_config(r->per_dir_config,
+												 &markdown_module);
 	ret = mkd_compile(doc, 0);
 	ap_rputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", r);
-	ap_rputs("<!DOCTYPE html "
-			 " PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\""
-			 " \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n", r);
+	ap_rputs(
+		"<!DOCTYPE html PUBLIC \n"
+		"          \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n"
+		"          \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n",
+		r);
 	ap_rputs("<html xmlns=\"http://www.w3.org/1999/xhtml\">\n", r);
 	ap_rputs("<head>\n", r);
+
+	if(conf->css){
+		ap_rputs("<meta http-equiv=\"Content-Type\""
+				 " content=\"text/html; charset=UTF-8\" />\n", r);
+		ap_rputs("<meta http-equiv=\"Content-Style-Type\""
+				 " content=\"text/css\" />\n", r);
+		ap_rprintf(r, "<link rel=\"stylesheet\" href=\"%s\" />\n", conf->css);
+	}
 	if(title = mkd_doc_title(doc)){
 		ap_rprintf(r, "<title>%s</title>\n", title);
 	}
 	ap_rputs("</head>\n", r);
 	ap_rputs("<body>\n", r);
-
+	if(title){
+		ap_rprintf(r, "<h1 class=\"title\">%s</h1>\n", title);
+	}
 	if((size = mkd_document(doc, &p)) != EOF){
 		ap_rwrite(p, size, r);
 	}
@@ -118,6 +141,29 @@ static int markdown_handler(request_rec *r)
     return OK;
 }
 
+static void *markdown_config(apr_pool_t *p, char *dummy)
+{
+    markdown_conf *c = (markdown_conf *)apr_pcalloc(p, sizeof(markdown_conf));
+    memset(c, 0, sizeof(markdown_conf));
+    return (void *)c;
+}
+
+static const char *set_markdown_css(cmd_parms *cmd,
+									void *conf,
+									const char *arg)
+{
+    markdown_conf *c = (markdown_conf*)conf;
+    c->css = arg;
+    return NULL;
+}
+
+static const command_rec markdown_cmds[] =
+{
+    AP_INIT_TAKE1("MarkdownCSS", set_markdown_css, NULL, OR_ALL,
+				  "set CSS"),
+    {NULL}
+};
+
 static void markdown_register_hooks(apr_pool_t *p)
 {
     ap_hook_handler(markdown_handler, NULL, NULL, APR_HOOK_MIDDLE);
@@ -126,10 +172,10 @@ static void markdown_register_hooks(apr_pool_t *p)
 /* Dispatch list for API hooks */
 module AP_MODULE_DECLARE_DATA markdown_module = {
     STANDARD20_MODULE_STUFF,
-    NULL,                  /* create per-dir    config structures */
-    NULL,                  /* merge  per-dir    config structures */
-    NULL,                  /* create per-server config structures */
-    NULL,                  /* merge  per-server config structures */
-    NULL,                  /* table of config file commands       */
-    markdown_register_hooks  /* register hooks                      */
+    markdown_config,        /* create per-dir    config structures */
+    NULL,                   /* merge  per-dir    config structures */
+    NULL,                   /* create per-server config structures */
+    NULL,                   /* merge  per-server config structures */
+    markdown_cmds,          /* table of config file commands       */
+    markdown_register_hooks /* register hooks                      */
 };
