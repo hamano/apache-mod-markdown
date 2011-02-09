@@ -48,7 +48,14 @@
 module AP_MODULE_DECLARE_DATA markdown_module;
 
 typedef struct {
-    const char *css;
+    const void *data;
+    struct list_t *next;
+} list_t;
+
+typedef struct {
+    list_t *css;
+    const char *header;
+    const char *footer;
 } markdown_conf;
 
 extern char *mkd_doc_title(Document *);
@@ -62,6 +69,7 @@ void markdown_output(Document * doc, request_rec * r)
     int size;
     char *p;
     markdown_conf *conf;
+    list_t *css;
 
     conf = (markdown_conf *) ap_get_module_config(r->per_dir_config,
                                                   &markdown_module);
@@ -79,10 +87,17 @@ void markdown_output(Document * doc, request_rec * r)
                  " content=\"text/html; charset=UTF-8\" />\n", r);
         ap_rputs("<meta http-equiv=\"Content-Style-Type\""
                  " content=\"text/css\" />\n", r);
-        ap_rprintf(r, "<link rel=\"stylesheet\" href=\"%s\" />\n",
-                   conf->css);
+		css = conf->css;
+		do{
+            ap_rprintf(r,
+                       "<link rel=\"stylesheet\" href=\"%s\""
+                       " type=\"text/css\" />\n",
+                       (char *)css->data);
+            css = (list_t *)css->next;
+		}while(css);
     }
-    if (title = mkd_doc_title(doc)) {
+    title = mkd_doc_title(doc);
+    if (title) {
         ap_rprintf(r, "<title>%s</title>\n", title);
     }
     ap_rputs("</head>\n", r);
@@ -117,7 +132,6 @@ static int markdown_handler(request_rec * r)
 {
     FILE *fp;
     Document *doc;
-    int ret;
 
     if (strcmp(r->handler, "markdown")) {
         return DECLINED;
@@ -177,13 +191,44 @@ static const char *set_markdown_css(cmd_parms * cmd, void *conf,
                                     const char *arg)
 {
     markdown_conf *c = (markdown_conf *) conf;
-    c->css = arg;
+    list_t *item = (list_t *)malloc(sizeof(list_t));
+    item->data = arg;
+    item->next = NULL;
+
+    list_t *tail;
+    if(c->css){
+        tail = c->css;
+        while(tail->next) tail = (list_t *)tail->next;
+        tail->next = (struct list_t *)item;
+    }else{
+        c->css = item;
+    }
+    return NULL;
+}
+
+static const char *set_markdown_header(cmd_parms * cmd, void *conf,
+									   const char *arg)
+{
+    markdown_conf *c = (markdown_conf *) conf;
+    c->header = arg;
+    return NULL;
+}
+
+static const char *set_markdown_footer(cmd_parms * cmd, void *conf,
+									   const char *arg)
+{
+    markdown_conf *c = (markdown_conf *) conf;
+    c->footer = arg;
     return NULL;
 }
 
 static const command_rec markdown_cmds[] = {
     AP_INIT_TAKE1("MarkdownCSS", set_markdown_css, NULL, OR_ALL,
                   "set CSS"),
+    AP_INIT_TAKE1("MarkdownHeaderHtml", set_markdown_footer, NULL, OR_ALL,
+                  "set Header HTML"),
+    AP_INIT_TAKE1("MarkdownFooterHtml", set_markdown_footer, NULL, OR_ALL,
+                  "set Footer HTML"),
     {NULL}
 };
 
