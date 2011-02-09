@@ -95,6 +95,7 @@ void markdown_output(Document * doc, request_rec * r)
     }
     ap_rputc('\n', r);
     ap_rputs("</body>\n", r);
+    ap_rputs("</html>\n", r);
     mkd_cleanup(doc);
 }
 
