@@ -159,7 +159,7 @@ static int markdown_handler(request_rec * r)
     }
 
     if (r->args && !strcasecmp(r->args, "raw")) {
-        r->content_type = "text/plain";
+        r->content_type = "text/plain; charset=UTF-8";
         raw_output(fp, r);
         fclose(fp);
     } else {
