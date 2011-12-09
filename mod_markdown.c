@@ -43,7 +43,7 @@
 #include "http_log.h"
 #include "ap_config.h"
 
-#include "markdown.h"
+#include "mkdio.h"
 
 module AP_MODULE_DECLARE_DATA markdown_module;
 
@@ -58,11 +58,9 @@ typedef struct {
     const char *footer;
 } markdown_conf;
 
-extern char *mkd_doc_title(Document *);
-
 #define P(s) ap_rputs(s, r)
 
-void markdown_output(Document * doc, request_rec * r)
+void markdown_output(MMIOT *doc, request_rec *r)
 {
     char *title;
     int ret;
@@ -73,7 +71,7 @@ void markdown_output(Document * doc, request_rec * r)
 
     conf = (markdown_conf *) ap_get_module_config(r->per_dir_config,
                                                   &markdown_module);
-    ret = mkd_compile(doc, 0);
+    ret = mkd_compile(doc, MKD_TOC|MKD_AUTOLINK);
     ap_rputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", r);
     ap_rputs("<!DOCTYPE html PUBLIC \n"
              "          \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n"
@@ -128,10 +126,10 @@ void raw_output(FILE * fp, request_rec * r)
 }
 
 /* The markdown handler */
-static int markdown_handler(request_rec * r)
+static int markdown_handler(request_rec *r)
 {
     FILE *fp;
-    Document *doc;
+    MMIOT *doc;
 
     if (strcmp(r->handler, "markdown")) {
         return DECLINED;
