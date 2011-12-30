@@ -4,10 +4,10 @@ lib_LTLIBRARIES = libmodmarkdown.la
 ## Define the source file for the module
 libmodmarkdown_la_SOURCES = mod_markdown.c
 libmodmarkdown_la_CFLAGS = -Wall -DAPACHE_DIR=\"@apache_dir@\"
-libmodmarkdown_la_LDFLAGS = -L@discount_dir@/ -lmarkdown
+libmodmarkdown_la_LDFLAGS = -L@discount_dir@/lib -lmarkdown
 
 ## Define that an include directory is required.
-INCLUDES = -I@apache_dir@/include -I@discount_dir@/ -D_LARGEFILE64_SOURCE
+INCLUDES = -I@apache_dir@/include -I@discount_dir@/include -D_LARGEFILE64_SOURCE
 #DEFS =
 
 install: .libs/libmodmarkdown.so

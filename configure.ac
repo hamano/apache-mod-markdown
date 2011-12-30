@@ -48,7 +48,7 @@ AC_MSG_CHECKING(for discount directory)
 if test "$with_discount" = "no"; then
     AC_MSG_ERROR( You need to specify the discount directory using --with-discount)
 else
-    if test -e $with_discount/mkdio.h; then
+    if test -e $with_discount/include/mkdio.h; then
         discount_dir=$with_discount
         AC_MSG_RESULT(DISCOUNT found!)
     else

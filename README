@@ -9,7 +9,8 @@ mod_markdown is Markdown filter module for Apache HTTPD Server.
 
   http://www.pell.portland.or.us/~orc/Code/discount/
 
-## Buid
+## Build
+    % ./autogen.sh
     % ./configure --with-apache=<APACHE_DIR> --with-discount=<DISCOUNT_DIR>
     % make
     % make install
