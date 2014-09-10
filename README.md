@@ -17,6 +17,7 @@ mod_markdown is Markdown filter module for Apache HTTPD Server.
 
 ## Configration
 in httpd.conf:
+
     LoadModule markdown_module modules/mod_markdown.so
     <Location /markdown>
         AddHandler markdown .md
