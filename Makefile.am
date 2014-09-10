@@ -10,7 +10,7 @@ libmodmarkdown_la_CFLAGS = -Wall $(apache_CFLAGS) -I@discount_dir@/include
 libmodmarkdown_la_LDFLAGS = -L@discount_dir@/lib -lmarkdown
 
 ## Define that an include directory is required.
-INCLUDES = -I@apache_dir@/include -I@discount_dir@/include -D_LARGEFILE64_SOURCE
+INCLUDES = -D_LARGEFILE64_SOURCE
 #DEFS =
 
 install: .libs/libmodmarkdown.so
