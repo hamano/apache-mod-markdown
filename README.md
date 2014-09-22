@@ -28,3 +28,13 @@ in httpd.conf:
         # If you want to use stylesheet.
         MarkdownCss style.css
     </Location>
+
+Or:
+
+    Alias /md /home/matt/md
+    <Directory /home/matt/md>
+        AddHandler markdown .md
+        DirectoryIndex index.md
+        Order allow,deny
+        Allow from all
+    </Directory>
