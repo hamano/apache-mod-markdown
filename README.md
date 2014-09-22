@@ -15,7 +15,7 @@ mod_markdown is Markdown filter module for Apache HTTPD Server.
     % make
     % make install
 
-Note: the <DISCOUNT_DIR> is the directory that contains the include directory that contains mkdio.h
+Note: `<DISCOUNT_DIR>` is the directory that contains the include directory that contains mkdio.h
 The default directory will be /usr/local/
 
 ## Configration
