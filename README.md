@@ -9,6 +9,9 @@ mod_markdown is Markdown filter module for Apache HTTPD Server.
 
   http://www.pell.portland.or.us/~orc/Code/discount/
 
+In debian:
+    # apt-get install libmarkdown2-dev
+
 ## Build
     % autoreconf
     % ./configure --with-apxs=<APXS_PATH> --with-discount=<DISCOUNT_DIR>
@@ -16,7 +19,7 @@ mod_markdown is Markdown filter module for Apache HTTPD Server.
     % make install
 
 Note: `<DISCOUNT_DIR>` is the directory that contains the include directory that contains mkdio.h
-The default directory will be /usr/local/
+Probably you need to specify --with-discount=/usr or --with-discount=/usr/local
 
 ## Configration
 in httpd.conf:
