@@ -14,7 +14,7 @@ In debian:
     # apt-get install libmarkdown2-dev
 
 ## Build
-    % autoreconf
+    % autoreconf -f -i
     % ./configure --with-apxs=<APXS_PATH> --with-discount=<DISCOUNT_DIR>
     % make
     % make install
