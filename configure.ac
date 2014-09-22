@@ -2,7 +2,7 @@
 AC_INIT(mod_markdown, 0.2)
 
 # Automake initialization
-AM_INIT_AUTOMAKE(dist-bzip2)
+AM_INIT_AUTOMAKE([dist-bzip2 foreign])
 AM_CONFIG_HEADER(config.h)
 
 # Add a test for a compiler.
