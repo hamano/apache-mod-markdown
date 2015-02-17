@@ -22,7 +22,7 @@ In debian:
 Note: `<DISCOUNT_DIR>` is the directory that contains the include directory that contains mkdio.h
 Probably you need to specify --with-discount=/usr or --with-discount=/usr/local
 
-## Configration
+## Configuration
 in httpd.conf:
 
     LoadModule markdown_module modules/mod_markdown.so
