@@ -79,10 +79,10 @@ void markdown_output(MMIOT *doc, request_rec *r)
              r);
     ap_rputs("<html xmlns=\"http://www.w3.org/1999/xhtml\">\n", r);
     ap_rputs("<head>\n", r);
+    ap_rputs("<meta http-equiv=\"Content-Type\""
+             " content=\"text/html; charset=UTF-8\" />\n", r);
 
     if (conf->css) {
-        ap_rputs("<meta http-equiv=\"Content-Type\""
-                 " content=\"text/html; charset=UTF-8\" />\n", r);
         ap_rputs("<meta http-equiv=\"Content-Style-Type\""
                  " content=\"text/css\" />\n", r);
 		css = conf->css;
