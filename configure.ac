@@ -1,5 +1,5 @@
 # Required initializer
-AC_INIT(mod_markdown, 1.0.2)
+AC_INIT(apache-mod-markdown, 1.0.2)
 
 # Automake initialization
 AM_INIT_AUTOMAKE([dist-bzip2 foreign])
