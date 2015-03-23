@@ -14,5 +14,5 @@ INCLUDES = -D_LARGEFILE64_SOURCE
 #DEFS =
 
 install: .libs/libmodmarkdown.so
-	install $< $(apache_LIBEXECDIR)/mod_markdown.so
+	install -D $< $(DESTDIR)$(apache_LIBEXECDIR)/mod_markdown.so
 
