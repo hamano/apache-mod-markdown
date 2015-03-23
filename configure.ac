@@ -9,6 +9,9 @@ AM_CONFIG_HEADER(config.h)
 AC_PROG_CC
 AM_PROG_LIBTOOL
 
+AC_CONFIG_MACRO_DIRS([m4])
+AX_CHECK_COMPILE_FLAG([-Wall], [CFLAGS="$CFLAGS -Wall"], [], [])
+
 AC_ARG_WITH(apxs,
             [  --with-apxs=FILE      pathname to the Apache apxs tool ],
             ,[with_apxs="no"])
