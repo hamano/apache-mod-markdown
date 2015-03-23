@@ -63,7 +63,6 @@ typedef struct {
 void markdown_output(MMIOT *doc, request_rec *r)
 {
     char *title;
-    int ret;
     int size;
     char *p;
     markdown_conf *conf;
@@ -71,7 +70,7 @@ void markdown_output(MMIOT *doc, request_rec *r)
 
     conf = (markdown_conf *) ap_get_module_config(r->per_dir_config,
                                                   &markdown_module);
-    ret = mkd_compile(doc, MKD_TOC|MKD_AUTOLINK);
+    mkd_compile(doc, MKD_TOC|MKD_AUTOLINK);
     ap_rputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", r);
     ap_rputs("<!DOCTYPE html PUBLIC \n"
              "          \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n"
@@ -223,7 +222,7 @@ static const char *set_markdown_footer(cmd_parms * cmd, void *conf,
 static const command_rec markdown_cmds[] = {
     AP_INIT_TAKE1("MarkdownCSS", set_markdown_css, NULL, OR_ALL,
                   "set CSS"),
-    AP_INIT_TAKE1("MarkdownHeaderHtml", set_markdown_footer, NULL, OR_ALL,
+    AP_INIT_TAKE1("MarkdownHeaderHtml", set_markdown_header, NULL, OR_ALL,
                   "set Header HTML"),
     AP_INIT_TAKE1("MarkdownFooterHtml", set_markdown_footer, NULL, OR_ALL,
                   "set Footer HTML"),
