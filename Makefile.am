@@ -1,7 +1,7 @@
 ## This is the shared library to be built                                       
 lib_LTLIBRARIES = libmodmarkdown.la
 
-apache_CFLAGS=`@apxs@ -q CFLAGS` -I`@apxs@ -q INCLUDEDIR`
+apache_CFLAGS=`@apxs@ -q CFLAGS` `@apxs@ -q EXTRA_INCLUDES`
 apache_LIBEXECDIR=`@apxs@ -q LIBEXECDIR`
 
 ## Define the source file for the module
