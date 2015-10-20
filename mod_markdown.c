@@ -111,19 +111,6 @@ void markdown_output(MMIOT *doc, request_rec *r)
     mkd_cleanup(doc);
 }
 
-void raw_output(FILE * fp, request_rec * r)
-{
-    char buf[1024];
-    size_t len;
-    while (1) {
-        len = fread(buf, 1, 1024, fp);
-        if (len <= 0) {
-            break;
-        }
-        ap_rwrite(buf, len, r);
-    }
-}
-
 /* The markdown handler */
 static int markdown_handler(request_rec *r)
 {
@@ -141,6 +128,10 @@ static int markdown_handler(request_rec *r)
     ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r,
                   "markdown_handler(): %s", r->filename);
 
+    if (r->args && !strcasecmp(r->args, "raw")) {
+        return DECLINED;
+    }
+
     fp = fopen(r->filename, "r");
     if (fp == NULL) {
         switch (errno) {
@@ -155,21 +146,14 @@ static int markdown_handler(request_rec *r)
         }
     }
 
-    if (r->args && !strcasecmp(r->args, "raw")) {
-        r->content_type = "text/plain; charset=UTF-8";
-        raw_output(fp, r);
-        fclose(fp);
-    } else {
-        r->content_type = "text/html";
-        doc = mkd_in(fp, 0);
-        fclose(fp);
-        if (doc == NULL) {
-            ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                          "mkd_in() returned NULL\n");
-            return HTTP_INTERNAL_SERVER_ERROR;
-        }
-        markdown_output(doc, r);
+    r->content_type = "text/html";
+    doc = mkd_in(fp, 0);
+    fclose(fp);
+    if (doc == NULL) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "mkd_in() returned NULL\n");
+        return HTTP_INTERNAL_SERVER_ERROR;
     }
+    markdown_output(doc, r);
 
     return OK;
 }
