@@ -1,3 +1,5 @@
+ACLOCAL_AMFLAGS=-I m4
+
 ## This is the shared library to be built                                       
 lib_LTLIBRARIES = libmodmarkdown.la
 
