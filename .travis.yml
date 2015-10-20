@@ -1,10 +1,12 @@
 language: c
 
-sudo: required
+sudo: false
 
-before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq apache2-dev libmarkdown2-dev
+addons:
+  apt:
+    packages:
+    - apache2-dev
+    - libmarkdown2-dev
 
 install:
   - autoreconf -f -i
