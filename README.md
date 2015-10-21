@@ -1,6 +1,8 @@
 mod_markdown
 ============
 
+[![Build Status](https://travis-ci.org/hamano/apache-mod-markdown.svg?branch=master)](https://travis-ci.org/hamano/apache-mod-markdown)
+
 mod_markdown is Markdown filter module for Apache HTTPD Server.
 
 ## Dependencies
