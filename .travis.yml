@@ -14,7 +14,7 @@ before_install:
 
 install:
   - autoreconf -f -i
-  - ./configure --with-apxs=/usr/bin/apxs --with-discount=/usr
+  - ./configure --with-apxs=/usr/bin/apxs2 --with-discount=/usr
   - make
 
 script:
