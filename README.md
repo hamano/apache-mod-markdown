@@ -11,9 +11,10 @@ mod_markdown is Markdown filter module for Apache HTTPD Server.
 
   http://www.pell.portland.or.us/~orc/Code/discount/
 
-In debian:
+For Debian:
 
 ~~~
+# apt-get install build-essential libtool automake autoconf
 # apt-get install libmarkdown2-dev
 ~~~
 
