@@ -14,31 +14,23 @@ AX_CHECK_COMPILE_FLAG([-Wall], [CFLAGS="$CFLAGS -Wall"], [], [])
 
 AC_ARG_WITH(apxs,
             [  --with-apxs=FILE      pathname to the Apache apxs tool ],
-            ,[with_apxs="no"])
+            ,[with_apxs="/usr/bin/apxs"])
 AC_MSG_CHECKING(for apxs tool)
-if test "$with_apxs" = "no"; then
-    AC_MSG_ERROR( You need to specify the apxs file using --with-apxs)
+if test -e $with_apxs; then
+    apxs=$with_apxs
+    AC_MSG_RESULT(APXS found!)
 else
-    if test -e $with_apxs; then
-        apxs=$with_apxs
-        AC_MSG_RESULT(APXS found!)
-    else
-        AC_MSG_ERROR( $with_apxs not found.  Check the value you specified with --with-apxs)
-    fi
+    AC_MSG_ERROR( $with_apxs not found.  Check the value you specified with --with-apxs)
 fi
 AC_SUBST(apxs)
 
-AC_ARG_WITH(discount, [  --with-discount=DIR    discount directory ],,[with_discount="no"])
+AC_ARG_WITH(discount, [  --with-discount=DIR    discount directory ],,[with_discount="/usr"])
 AC_MSG_CHECKING(for discount directory)
-if test "$with_discount" = "no"; then
-    AC_MSG_ERROR( You need to specify the discount directory using --with-discount)
+if test -e $with_discount/include/mkdio.h -o -e $with_discount/include/*/mkdio.h; then
+    discount_dir=$with_discount
+    AC_MSG_RESULT(DISCOUNT found!)
 else
-    if test -e $with_discount/include/mkdio.h -o -e $with_discount/include/*/mkdio.h; then
-        discount_dir=$with_discount
-        AC_MSG_RESULT(DISCOUNT found!)
-    else
-        AC_MSG_ERROR( $with_discount not found.  Check the value you specified with --with-discount)
-    fi
+    AC_MSG_ERROR( $with_discount not found.  Check the value you specified with --with-discount)
 fi
 AC_SUBST(discount_dir)
 
