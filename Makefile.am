@@ -15,6 +15,6 @@ libmodmarkdown_la_LDFLAGS = -L@discount_dir@/lib -lmarkdown
 AM_CPPFLAGS = -D_LARGEFILE64_SOURCE
 #DEFS =
 
-install: mod_markdown.la
-	@apxs@ -i $^
+install: libmodmarkdown.la
+	@apxs@ -n markdown -i $^
 
