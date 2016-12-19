@@ -15,7 +15,7 @@ For Debian:
 
 ~~~
 # apt-get install build-essential libtool automake autoconf
-# apt-get install libmarkdown2-dev
+# apt-get install libmarkdown2-dev apache2-dev
 ~~~
 
 ## Build
