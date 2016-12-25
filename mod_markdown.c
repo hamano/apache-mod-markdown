@@ -146,7 +146,7 @@ static int markdown_handler(request_rec *r)
         }
     }
 
-    r->content_type = "text/html";
+    r->content_type = "application/xhtml+xml";
     doc = mkd_in(fp, 0);
     fclose(fp);
     if (doc == NULL) {
