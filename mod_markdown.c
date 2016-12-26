@@ -96,6 +96,8 @@ void markdown_output(MMIOT *doc, request_rec *r)
     title = mkd_doc_title(doc);
     if (title) {
         ap_rprintf(r, "<title>%s</title>\n", title);
+    }else{
+        ap_rprintf(r, "<title></title>\n");
     }
     ap_rputs("</head>\n", r);
     ap_rputs("<body>\n", r);
