@@ -37,6 +37,8 @@
 **    The sample page from mod_markdown.c
 */
 
+#include "strings.h"
+
 #include "httpd.h"
 #include "http_config.h"
 #include "http_protocol.h"
@@ -47,18 +49,84 @@
 
 module AP_MODULE_DECLARE_DATA markdown_module;
 
+typedef enum {
+    HTML_5 = 0, XHTML_5, XHTML_1_0_STRICT, XHTML_1_0_TRANSITIONAL,
+    XHTML_1_0_FRAMESET, XHTML_1_1, HTML_4_01_STRICT, HTML_4_01_TRANSITIONAL,
+    HTML_4_01_FRAMESET, XHTML_BASIC_1_0, XHTML_BASIC_1_1
+} doctype_t;
+
 typedef struct {
     const void *data;
     struct list_t *next;
 } list_t;
 
 typedef struct {
+    doctype_t doctype;
     list_t *css;
     const char *header;
     const char *footer;
 } markdown_conf;
 
 #define P(s) ap_rputs(s, r)
+
+/* XML - Wikipedia
+ * https://en.wikipedia.org/wiki/XML */
+#define XML_DECLARATION "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+
+/* Document type declaration - Wikipedia
+ * https://en.wikipedia.org/wiki/Document_type_declaration */
+#define DTD_HTML_5 "<!DOCTYPE html>\n"
+/* Both DTDs are the same */
+#define DTD_XHTML_5 DTD_HTML_5
+
+/* Probably should use Apache's internal macro `DOCTYPE_(X)HTML_*` instead */
+#define DTD_XHTML_1_1 \
+"<!DOCTYPE html PUBLIC\n"\
+"          \"-//W3C//DTD XHTML 1.1//EN\"\n"\
+"          \"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n"
+#define DTD_XHTML_1_0_STRICT \
+"<!DOCTYPE html\n" \
+"          PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n"\
+"          \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n"
+#define DTD_XHTML_1_0_TRANSITIONAL \
+"<!DOCTYPE html\n" \
+"          PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n"\
+"          \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n"
+#define DTD_XHTML_1_0_FRAMESET \
+"<!DOCTYPE html\n" \
+"          PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\"\n"\
+"          \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">\n"
+#define DTD_HTML_4_01_STRICT \
+"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n"\
+"          \"http://www.w3.org/TR/html4/strict.dtd\">\n"
+#define DTD_HTML_4_01_TRANSITIONAL \
+"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n"\
+"          \"http://www.w3.org/TR/html4/loose.dtd\">\n"
+#define DTD_HTML_4_01_FRAMESET \
+"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Frameset//EN\"\n"\
+"          \"http://www.w3.org/TR/html4/frameset.dtd\">\n"
+
+#define DTD_XHTML_BASIC_1_0 \
+"<!DOCTYPE html PUBLIC\n"\
+"          \"-//W3C//DTD XHTML Basic 1.0//EN\"\n"\
+"          \"http://www.w3.org/TR/xhtml-basic/xhtml-basic10.dtd\">\n"
+#define DTD_XHTML_BASIC_1_1 \
+"<!DOCTYPE html PUBLIC\n"\
+"          \"-//W3C//DTD XHTML Basic 1.1//EN\"\n"\
+"          \"http://www.w3.org/TR/xhtml-basic/xhtml-basic11.dtd\">\n"
+
+/* Root Element, <html> standard-specific attributes
+ * Currently we only support the common `xmlns` attribute as the remaining att-
+ * rs are locale-specific */
+#define ROOT_ELEMENT_HTML_ATTR_XMLNS "xmlns=\"http://www.w3.org/1999/xhtml\""
+/* Declaring language in HTML
+ * https://www.w3.org/International/questions/qa-html-language-declarations
+ * "Use the `lang` attribute for pages served as HTML, and the `xml:lang` attri-
+ * bute for pages served as XML. For XHTML 1.x and HTML5 polyglot documents, us-
+ * e both together."
+#define ROOT_ELEMENT_HTML_ATTR_XML_LANG
+#define ROOT_ELEMENT_HTML_ATTR_LANG
+*/
 
 void markdown_output(MMIOT *doc, request_rec *r)
 {
@@ -71,15 +139,108 @@ void markdown_output(MMIOT *doc, request_rec *r)
     conf = (markdown_conf *) ap_get_module_config(r->per_dir_config,
                                                   &markdown_module);
     mkd_compile(doc, MKD_TOC|MKD_AUTOLINK);
-    ap_rputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", r);
-    ap_rputs("<!DOCTYPE html PUBLIC \n"
-             "          \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n"
-             "          \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n",
-             r);
-    ap_rputs("<html xmlns=\"http://www.w3.org/1999/xhtml\">\n", r);
+    switch(conf->doctype){
+    case XHTML_5:
+    case XHTML_1_0_STRICT:
+    case XHTML_1_0_TRANSITIONAL:
+    case XHTML_1_0_FRAMESET:
+    case XHTML_1_1:
+    case XHTML_BASIC_1_0:
+    case XHTML_BASIC_1_1:
+        ap_rputs(XML_DECLARATION, r);
+        break;
+    default:
+        /* No XML declaration for HTML doctypes */
+        break;
+    }
+
+    switch(conf->doctype){
+    case HTML_5:
+        ap_rputs(DTD_HTML_5, r);
+        break;
+    case XHTML_5:
+        ap_rputs(DTD_XHTML_5, r);
+        break;
+    case XHTML_1_0_STRICT:
+        ap_rputs(DTD_XHTML_1_0_STRICT, r);
+        break;
+    case XHTML_1_0_TRANSITIONAL:
+        ap_rputs(DTD_XHTML_1_0_TRANSITIONAL, r);
+        break;
+    case XHTML_1_0_FRAMESET:
+        ap_rputs(DTD_XHTML_1_0_FRAMESET, r);
+        break;
+    case XHTML_1_1:
+        ap_rputs(DTD_XHTML_1_1, r);
+        break;
+    case HTML_4_01_STRICT:
+        ap_rputs(DTD_HTML_4_01_STRICT, r);
+        break;
+    case HTML_4_01_TRANSITIONAL:
+        ap_rputs(DTD_HTML_4_01_TRANSITIONAL, r);
+        break;
+    case HTML_4_01_FRAMESET:
+        ap_rputs(DTD_HTML_4_01_FRAMESET, r);
+        break;
+    case XHTML_BASIC_1_0:
+        ap_rputs(DTD_XHTML_BASIC_1_0, r);
+        break;
+    case XHTML_BASIC_1_1:
+        ap_rputs(DTD_XHTML_BASIC_1_1, r);
+        break;
+    default:
+        /* Shouldn't be here */
+        break;
+    }
+
+    switch(conf->doctype){
+    case HTML_5:
+    case HTML_4_01_STRICT:
+    case HTML_4_01_TRANSITIONAL:
+    case HTML_4_01_FRAMESET:
+        ap_rputs("<html>\n", r);
+        break;
+    case XHTML_5:
+    case XHTML_1_0_STRICT:
+    case XHTML_1_0_TRANSITIONAL:
+    case XHTML_1_0_FRAMESET:
+    case XHTML_1_1:
+    case XHTML_BASIC_1_0:
+    case XHTML_BASIC_1_1:
+        ap_rputs("<html " ROOT_ELEMENT_HTML_ATTR_XMLNS ">\n", r);
+        break;
+    default:
+        /* Shouldn't be here */
+        break;
+    }
+
     ap_rputs("<head>\n", r);
-    ap_rputs("<meta http-equiv=\"Content-Type\""
-             " content=\"text/html; charset=UTF-8\" />\n", r);
+
+    /* <meta> - HTML | MDN
+     * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta */
+    switch(conf->doctype){
+    case HTML_5:
+    case XHTML_5:
+        ap_rputs("<meta charset=\"utf-8\">\n", r);
+        break;
+    case HTML_4_01_STRICT:
+    case HTML_4_01_TRANSITIONAL:
+    case HTML_4_01_FRAMESET:
+        ap_rputs("<meta http-equiv=\"Content-Type\" content=\"text/html; "
+                 "charset=utf-8\">\n", r);
+        break;
+    case XHTML_1_0_STRICT:
+    case XHTML_1_0_TRANSITIONAL:
+    case XHTML_1_0_FRAMESET:
+    case XHTML_1_1:
+    case XHTML_BASIC_1_0:
+    case XHTML_BASIC_1_1:
+        /* Shouldn't needed as XML declaration already specifies Content-Type */
+        break;
+    default:
+        /* Shouldn't be here */
+        break;
+    }
 
     if (conf->css) {
         ap_rputs("<meta http-equiv=\"Content-Style-Type\""
@@ -118,6 +279,10 @@ static int markdown_handler(request_rec *r)
 {
     FILE *fp;
     MMIOT *doc;
+    markdown_conf *conf;
+
+    conf = (markdown_conf *) ap_get_module_config(r->per_dir_config,
+                                                  &markdown_module);
 
     if (strcmp(r->handler, "markdown")) {
         return DECLINED;
@@ -148,7 +313,27 @@ static int markdown_handler(request_rec *r)
         }
     }
 
-    r->content_type = "application/xhtml+xml";
+    switch(conf->doctype){
+    case HTML_5:
+    case HTML_4_01_STRICT:
+    case HTML_4_01_TRANSITIONAL:
+    case HTML_4_01_FRAMESET:
+        r->content_type = "text/html";
+        break;
+    case XHTML_5:
+    case XHTML_1_0_STRICT:
+    case XHTML_1_0_TRANSITIONAL:
+    case XHTML_1_0_FRAMESET:
+    case XHTML_1_1:
+    case XHTML_BASIC_1_0:
+    case XHTML_BASIC_1_1:
+        r->content_type = "application/xhtml+xml";
+        break;
+    default:
+        /* Shouldn't be here */
+        break;
+    }
+
     doc = mkd_in(fp, 0);
     fclose(fp);
     if (doc == NULL) {
@@ -168,6 +353,46 @@ static void *markdown_config(apr_pool_t * p, char *dummy)
         (markdown_conf *) apr_pcalloc(p, sizeof(markdown_conf));
     memset(c, 0, sizeof(markdown_conf));
     return (void *) c;
+}
+
+static const char *set_markdown_doctype(cmd_parms * cmd, void *conf,
+                                    const char *arg)
+{
+    markdown_conf *c = (markdown_conf *) conf;
+    if(!strcmp(arg, "HTML_5")){
+        c->doctype = HTML_5;
+    }else if(!strcmp(arg, "XHTML_5")){
+        c->doctype = XHTML_5;
+    }else if(!strcmp(arg, "XHTML_1_0_STRICT")){
+        c->doctype = XHTML_1_0_STRICT;
+    }else if(!strcmp(arg, "XHTML_1_0_TRANSITIONAL")){
+        c->doctype = XHTML_1_0_TRANSITIONAL;
+    }else if(!strcmp(arg, "XHTML_1_0_FRAMESET")){
+        c->doctype = XHTML_1_0_FRAMESET;
+    }else if(!strcmp(arg, "XHTML_1_1")){
+        c->doctype = XHTML_1_1;
+    }else if(!strcmp(arg, "HTML_4_01_STRICT")){
+        c->doctype = HTML_4_01_STRICT;
+    }else if(!strcmp(arg, "HTML_4_01_TRANSITIONAL")){
+        c->doctype = HTML_4_01_TRANSITIONAL;
+    }else if(!strcmp(arg, "HTML_4_01_FRAMESET")){
+        c->doctype = HTML_4_01_FRAMESET;
+    }else if(!strcmp(arg, "XHTML_BASIC_1_0")){
+        c->doctype = XHTML_BASIC_1_0;
+    }else if(!strcmp(arg, "XHTML_BASIC_1_1")){
+        c->doctype = XHTML_BASIC_1_1;
+    }else{
+        /* Unknown value, set doctype to the least strict default */
+        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, NULL, "Doctype \"%s\" "
+                     "unknown, setting to HTML 4.01 Transitional.\n", arg);
+        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, NULL, "Available options: "
+                     "HTML_5, XHTML_5, XHTML_1_0_STRICT, "
+                     "XHTML_1_0_TRANSITIONAL, XHTML_1_0_FRAMESET, XHTML_1_1, "
+                     "HTML_4_01_STRICT, HTML_4_01_TRANSITIONAL, "
+                     "HTML_4_01_FRAMESET, XHTML_BASIC_1_0, XHTML_BASIC_1_1.");
+        c->doctype = HTML_4_01_TRANSITIONAL;
+    }
+    return NULL;
 }
 
 static const char *set_markdown_css(cmd_parms * cmd, void *conf,
@@ -206,6 +431,8 @@ static const char *set_markdown_footer(cmd_parms * cmd, void *conf,
 }
 
 static const command_rec markdown_cmds[] = {
+    AP_INIT_TAKE1("MarkdownDoctype", set_markdown_doctype, NULL, OR_ALL,
+                  "set Doctype"),
     AP_INIT_TAKE1("MarkdownCSS", set_markdown_css, NULL, OR_ALL,
                   "set CSS"),
     AP_INIT_TAKE1("MarkdownHeaderHtml", set_markdown_header, NULL, OR_ALL,
