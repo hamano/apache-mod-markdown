@@ -36,6 +36,8 @@
 **
 **    The sample page from mod_markdown.c
 */
+#include "stdlib.h"
+#include "limits.h"
 
 #include "strings.h"
 
@@ -63,11 +65,13 @@ typedef struct {
 typedef struct {
     doctype_t doctype;
     list_t *css;
+    mkd_flag_t mkd_flags;
     const char *header;
     const char *footer;
 } markdown_conf;
 
 #define P(s) ap_rputs(s, r)
+#define DEFAULT_MKD_FLAGS (MKD_TOC|MKD_AUTOLINK)
 
 /* XML - Wikipedia
  * https://en.wikipedia.org/wiki/XML */
@@ -138,7 +142,8 @@ void markdown_output(MMIOT *doc, request_rec *r)
 
     conf = (markdown_conf *) ap_get_module_config(r->per_dir_config,
                                                   &markdown_module);
-    mkd_compile(doc, MKD_TOC|MKD_AUTOLINK);
+    mkd_compile(doc, conf->mkd_flags);
+
     switch(conf->doctype){
     case XHTML_5:
     case XHTML_1_0_STRICT:
@@ -352,6 +357,8 @@ static void *markdown_config(apr_pool_t * p, char *dummy)
     markdown_conf *c =
         (markdown_conf *) apr_pcalloc(p, sizeof(markdown_conf));
     memset(c, 0, sizeof(markdown_conf));
+    c->doctype = HTML_4_01_TRANSITIONAL;
+    c->mkd_flags = DEFAULT_MKD_FLAGS;
     return (void *) c;
 }
 
@@ -383,9 +390,9 @@ static const char *set_markdown_doctype(cmd_parms * cmd, void *conf,
         c->doctype = XHTML_BASIC_1_1;
     }else{
         /* Unknown value, set doctype to the least strict default */
-        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, NULL, "Doctype \"%s\" "
+        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, NULL, "apache-mod-markdown: Doctype \"%s\" "
                      "unknown, setting to HTML 4.01 Transitional.\n", arg);
-        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, NULL, "Available options: "
+        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, NULL, "apache-mod-markdown: Available options: "
                      "HTML_5, XHTML_5, XHTML_1_0_STRICT, "
                      "XHTML_1_0_TRANSITIONAL, XHTML_1_0_FRAMESET, XHTML_1_1, "
                      "HTML_4_01_STRICT, HTML_4_01_TRANSITIONAL, "
@@ -430,6 +437,28 @@ static const char *set_markdown_footer(cmd_parms * cmd, void *conf,
     return NULL;
 }
 
+static const char *set_markdown_flags(cmd_parms * cmd, void *conf,
+									   const char *arg)
+{
+    long int flags;
+    markdown_conf *c = (markdown_conf *) conf;
+
+    flags = strtol(arg, NULL, 0);
+    if(flags < 0 || flags > UINT_MAX){
+        /* Currently mkd_flag_t is an unsigned integer */
+
+        /* Invalid(out of range) flag, setting flag to the
+         * current default */
+        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, NULL, "apache-mod-markdown: Flags \"%#lX\" "
+                     "invalid, setting to default value \"%#X\".\n",
+                     flags, DEFAULT_MKD_FLAGS);
+        c->mkd_flags = DEFAULT_MKD_FLAGS;
+    }else{
+        c->mkd_flags = flags;
+    }
+    return NULL;
+}
+
 static const command_rec markdown_cmds[] = {
     AP_INIT_TAKE1("MarkdownDoctype", set_markdown_doctype, NULL, OR_ALL,
                   "set Doctype"),
@@ -439,6 +468,8 @@ static const command_rec markdown_cmds[] = {
                   "set Header HTML"),
     AP_INIT_TAKE1("MarkdownFooterHtml", set_markdown_footer, NULL, OR_ALL,
                   "set Footer HTML"),
+    AP_INIT_TAKE1("MarkdownFlags", set_markdown_flags, NULL, OR_ALL,
+                  "set Discount flags"),
     {NULL}
 };
 
