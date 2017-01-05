@@ -357,6 +357,7 @@ static void *markdown_config(apr_pool_t * p, char *dummy)
     markdown_conf *c =
         (markdown_conf *) apr_pcalloc(p, sizeof(markdown_conf));
     memset(c, 0, sizeof(markdown_conf));
+    c->doctype = HTML_4_01_TRANSITIONAL;
     c->mkd_flags = DEFAULT_MKD_FLAGS;
     return (void *) c;
 }
