@@ -71,7 +71,11 @@ typedef struct {
 } markdown_conf;
 
 #define P(s) ap_rputs(s, r)
+#ifdef MKD_FENCEDCODE
 #define DEFAULT_MKD_FLAGS (MKD_TOC | MKD_AUTOLINK | MKD_FENCEDCODE)
+#else
+#define DEFAULT_MKD_FLAGS (MKD_TOC | MKD_AUTOLINK )
+#endif
 
 /* XML - Wikipedia
  * https://en.wikipedia.org/wiki/XML */
