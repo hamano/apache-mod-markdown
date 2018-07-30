@@ -271,6 +271,12 @@ void markdown_output(MMIOT *doc, request_rec *r)
     }
     ap_rputs("</head>\n", r);
     ap_rputs("<body>\n", r);
+
+    if (conf->header) {
+        ap_rputs(conf->header, r);
+        ap_rputc('\n', r);
+    }
+
     if (title) {
         ap_rprintf(r, "<h1 class=\"title\">%s</h1>\n", title);
     }
@@ -278,6 +284,12 @@ void markdown_output(MMIOT *doc, request_rec *r)
         ap_rwrite(p, size, r);
     }
     ap_rputc('\n', r);
+
+    if (conf->footer) {
+        ap_rputs(conf->footer, r);
+        ap_rputc('\n', r);
+    }
+
     ap_rputs("</body>\n", r);
     ap_rputs("</html>\n", r);
     mkd_cleanup(doc);
@@ -492,3 +504,11 @@ module AP_MODULE_DECLARE_DATA markdown_module = {
     markdown_cmds,              /* table of config file commands       */
     markdown_register_hooks     /* register hooks                      */
 };
+
+/*
+ * Local variables:
+ * indent-tabs-mode: nil
+ * tab-width: 4
+ * c-basic-offset: 4
+ * End:
+ */
