@@ -47,7 +47,9 @@ LoadModule markdown_module /usr/lib/apache2/modules/mod_markdown.so
     AddHandler markdown .md
 
     # If you want to use stylesheet.
-    MarkdownCss style.css
+    # MarkdownCss style.css
+    # MarkdownHeaderHtml "<p>Header</p>"
+    # MarkdownFooterHtml "<p>Footer</p>"
 </Location>
 ~~~
 
@@ -67,7 +69,7 @@ default: MKD_TOC | MKD_AUTOLINK | MKD_FENCEDCODE
 Flag | Value | Description
 --- | --- | ---
 MKD_FENCEDCODE   | 0x02000000 | enabled fenced code blocks
-MKD_AUTOLINK     | 0x00004000 | make http://foo.com link even without <>s
+MKD_AUTOLINK     | 0x00004000 | make http://foo.com link even without &lt;&gt;s
 MKD_TOC          | 0x00001000 | do table-of-contents processing
  |  |
 MKD_1_COMPAT     | 0x00002000 | compatibility with MarkdownTest_1.0
@@ -85,12 +87,12 @@ MKD_NODLIST      | 0x00100000 | forbid definition lists
 MKD_NO_EXT       | 0x00000040 | don't allow pseudo-protocols
 MKD_NOHEADER     | 0x00010000 | don't process header blocks
 MKD_NOHTML       | 0x00000008 | don't allow raw html through AT ALL
-MKD_NOIMAGE      | 0x00000002 | don't do image processing, block <img>
-MKD_NOLINKS      | 0x00000001 | don't do link processing, block <a> tags
+MKD_NOIMAGE      | 0x00000002 | don't do image processing, block &lt;img&gt;
+MKD_NOLINKS      | 0x00000001 | don't do link processing, block &lt;a&gt; tags
 MKD_NOPANTS      | 0x00000004 | don't run smartypants()
 MKD_NORELAXED    | 0x00000200 | emphasis happens /everywhere/
 MKD_NOSTRIKETHROUGH  | 0x00000800 |     forbid ~~strikethrough~~
-MKD_NOSTYLE      | 0x00400000 | don't extract <style> blocks
+MKD_NOSTYLE      | 0x00400000 | don't extract &lt;style&gt; blocks
 MKD_NOSUPERSCRIPT  | 0x00000100 |       no A^B
 MKD_NOTABLES     | 0x00000400 | disallow tables
 MKD_SAFELINK     | 0x00008000 | paranoid check for link protocol
