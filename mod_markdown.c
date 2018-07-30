@@ -47,6 +47,10 @@
 #include "http_log.h"
 #include "ap_config.h"
 
+#include "apr_file_io.h"
+#include "apr_file_info.h"
+#include "apr_strings.h"
+
 #include "mkdio.h"
 
 module AP_MODULE_DECLARE_DATA markdown_module;
@@ -54,7 +58,7 @@ module AP_MODULE_DECLARE_DATA markdown_module;
 typedef enum {
     HTML_5 = 0, XHTML_5, XHTML_1_0_STRICT, XHTML_1_0_TRANSITIONAL,
     XHTML_1_0_FRAMESET, XHTML_1_1, HTML_4_01_STRICT, HTML_4_01_TRANSITIONAL,
-    HTML_4_01_FRAMESET, XHTML_BASIC_1_0, XHTML_BASIC_1_1
+    HTML_4_01_FRAMESET, XHTML_BASIC_1_0, XHTML_BASIC_1_1, HTML_UNSET = -1
 } doctype_t;
 
 typedef struct {
@@ -136,18 +140,50 @@ typedef struct {
 #define ROOT_ELEMENT_HTML_ATTR_LANG
 */
 
-void markdown_output(MMIOT *doc, request_rec *r)
+#include "mod_markdown.h"
+int markdown_output(MMIOT *doc, request_rec *r)
 {
-    char *title;
     int size;
     char *p;
     markdown_conf *conf;
-    list_t *css;
+    int result;
 
     conf = (markdown_conf *) ap_get_module_config(r->per_dir_config,
                                                   &markdown_module);
     mkd_compile(doc, conf->mkd_flags);
 
+    if (conf->header == NULL && conf->footer == NULL) {
+        result = markdown_doc_header(doc, r, conf);
+    } else {
+        result = markdown_doc_contents(r, "Header", conf->header, COMMENT_START | COMMENT_END);
+    }
+
+    if (result != OK) {
+        return result;
+    }
+
+    if ((size = mkd_document(doc, &p)) != EOF) {
+        ap_rwrite(p, size, r);
+    }
+
+    /* Insert a new line just to be sure it's clean */
+    ap_rputc('\n', r);
+
+    if (conf->header == NULL && conf->footer == NULL) {
+        result = markdown_doc_footer(r, conf);
+    } else {
+        result = markdown_doc_contents(r, "Footer", conf->footer, COMMENT_START | COMMENT_END);
+    }
+
+    if (result != OK) {
+        return result;
+    }
+    mkd_cleanup(doc);
+    return OK;
+}
+
+static int markdown_doc_header(MMIOT *doc, request_rec *r, markdown_conf *conf)
+{
     switch(conf->doctype){
     case XHTML_5:
     case XHTML_1_0_STRICT:
@@ -252,39 +288,177 @@ void markdown_output(MMIOT *doc, request_rec *r)
     }
 
     if (conf->css) {
-        ap_rputs("<meta http-equiv=\"Content-Style-Type\""
-                 " content=\"text/css\" />\n", r);
-		css = conf->css;
-		do{
-            ap_rprintf(r,
-                       "<link rel=\"stylesheet\" href=\"%s\""
-                       " type=\"text/css\" />\n",
-                       (char *)css->data);
-            css = (list_t *)css->next;
-		}while(css);
+      ap_rputs("<meta http-equiv=\"Content-Style-Type\""
+               " content=\"text/css\" />\n", r);
+      list_t *css = conf->css;
+      do {
+        ap_rprintf(r,
+          "<link rel=\"stylesheet\" href=\"%s\""
+          " type=\"text/css\" />\n",
+          (char *)css->data);
+        css = (list_t *)css->next;
+      } while (css);
     }
-    title = mkd_doc_title(doc);
+
+    char *title = mkd_doc_title(doc);
     if (title) {
         ap_rprintf(r, "<title>%s</title>\n", title);
-    }else{
+    } else {
         ap_rprintf(r, "<title></title>\n");
     }
+
     ap_rputs("</head>\n", r);
     ap_rputs("<body>\n", r);
+
     if (title) {
         ap_rprintf(r, "<h1 class=\"title\">%s</h1>\n", title);
     }
-    if ((size = mkd_document(doc, &p)) != EOF) {
-        ap_rwrite(p, size, r);
-    }
-    ap_rputc('\n', r);
+
+   return OK;
+}
+
+static int markdown_doc_footer(request_rec *r, markdown_conf *conf)
+{
     ap_rputs("</body>\n", r);
     ap_rputs("</html>\n", r);
-    mkd_cleanup(doc);
+
+    return OK;
+}
+
+static int markdown_check_file_exists(request_rec *r, server_rec *s, const char *section, const char *filename) {
+    apr_finfo_t a_info;
+    int rc, exists;
+
+    rc = apr_stat(&a_info, filename, APR_FINFO_MIN, r->pool);
+    if (rc == APR_SUCCESS) {
+        exists =
+        (
+            (a_info.filetype != APR_NOFILE)
+        && !(a_info.filetype &  APR_DIR)
+        );
+
+        if (!exists) {
+            if (r) {
+                ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "apache-mod-markdown: Failed to find %s file: %d - %s ", section, rc, filename);
+            } else {
+                ap_log_error(APLOG_MARK, APLOG_ERR, 0, s, "apache-mod-markdown: Failed to find %s file: %d - %s ", section, rc, filename);
+            }
+            rc = HTTP_INTERNAL_SERVER_ERROR;
+        } else {
+            rc = OK;
+        }
+    } else {
+        if (r) {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "apache-mod-markdown: Failed to find %s file: %d - %s ", section, rc, filename);
+        } else {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s, "apache-mod-markdown: Failed to find %s file: %d - %s ", section, rc, filename);
+        }
+	rc = HTTP_INTERNAL_SERVER_ERROR;
+    }
+
+    return rc;
+}
+
+static int markdown_doc_contents(request_rec *r, const char *section, const char *filename, enum COMMENT_FLAGS flags)
+{
+    int rc, exists;
+
+    char buffer[256];
+    const char *a_section = apr_pstrdup(r->pool, section);
+
+    apr_size_t  a_size;
+    apr_file_t  *a_file;
+
+    //local_file = apr_pstrdup(r->pool, filename);
+
+    /* Figure out if the file we request exists and isn't a directory */
+    rc = markdown_check_file_exists(r, NULL, section, filename);
+    if (rc == OK) {
+        if ((flags & COMMENT_START) == COMMENT_START) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "apache-mod-markdown->markdown_doc_contents(%s): header", a_section);
+            ap_rprintf(r, "\n\n<!-- Start Of %s -->\n\n", a_section);
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "apache-mod-markdown->markdown_doc_contents(%s): header done", a_section);
+        }
+
+        a_size = sizeof(buffer);
+        rc = apr_file_open(&a_file, filename, APR_READ, APR_OS_DEFAULT, r->pool);
+        if (rc == APR_SUCCESS) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "apache-mod-markdown->markdown_doc_contents(%s): first read", section);
+            while (apr_file_read(a_file, buffer, &a_size) == APR_SUCCESS) {
+                ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "apache-mod-markdown->markdown_doc_contents(%s): other read", section);
+                ap_rwrite(buffer, a_size, r);
+            }
+
+            if ((flags & COMMENT_END) == COMMENT_END) {
+                ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "apache-mod-markdown->markdown_doc_contents(%s): footer", section);
+                ap_rprintf(r, "\n\n<!-- End Of %s -->\n\n", section);
+                ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "apache-mod-markdown->markdown_doc_contents(%s): footer done", section);
+            }
+
+            apr_file_close(a_file);
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "apache-mod-markdown->markdown_doc_contents(%s): file closed", section);
+            rc = OK;
+        } else {
+            rc = HTTP_NOT_FOUND;
+        }
+    }
+
+    return rc;
+}
+
+/*
+ * This routine is called after the server processes the configuration
+ * files.  At this point the module may review and adjust its configuration
+ * settings in relation to one another and report any problems.  On restart,
+ * this routine will be called twice, once in the startup process (which
+ * exits shortly after this phase) and once in the running server process.
+ *
+ * The return value is OK, DECLINED, or HTTP_mumble.  If we return OK, the
+ * server will still call any remaining modules with an handler for this
+ * phase.
+ */
+static int markdown_hook_check_config(apr_pool_t *pconf, apr_pool_t *plog,
+                                       apr_pool_t *ptemp, server_rec *s)
+{
+    markdown_conf *conf;
+
+    conf = (markdown_conf *) ap_get_module_config(s->module_config,
+                                                  &markdown_module);
+
+    ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s, "markdown_hook_check_config: makedown_conf found? %s", (conf == NULL ? "false" : "true"));
+    if (conf != NULL) {
+        if (conf->header != NULL && conf->footer != NULL) {
+            if (!markdown_check_file_exists(NULL, s, "Header", conf->header) ||
+                !markdown_check_file_exists(NULL, s, "Footer", conf->footer)) {
+                return DECLINED;
+            }
+
+            if (conf->css) {
+                ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s, "CSS specified whilst using Header/Footer file options, will be ignored");
+            }
+
+            /*************************************************
+             * The following is in the source commented out  *
+             * because markdown_hook_handler() does actually *
+             * use the DocType option                        *
+             *************************************************
+            if (conf->doc_type) {
+                ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, NULL, "DocType specifid whilst using Header/Footer file options, will be ignored");
+            }
+            */
+        } else if (conf->header != NULL && conf->footer == NULL) {
+            ap_log_error(APLOG_MARK, APLOG_ERR, 0, s, "Header specified, but footer was not\n");
+            return DECLINED;
+	} else if (conf->header == NULL && conf->footer != NULL) {
+		ap_log_error(APLOG_MARK, APLOG_ERR, 0, s, "Footer specified, but header was not\n");
+		return DECLINED;
+        }
+    }
+    return OK;
 }
 
 /* The markdown handler */
-static int markdown_handler(request_rec *r)
+static int markdown_hook_handler(request_rec *r)
 {
     FILE *fp;
     MMIOT *doc;
@@ -349,21 +523,94 @@ static int markdown_handler(request_rec *r)
         ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r, "mkd_in() returned NULL\n");
         return HTTP_INTERNAL_SERVER_ERROR;
     }
-    markdown_output(doc, r);
 
-    return OK;
+    return markdown_output(doc, r);
 }
 
 
 
-static void *markdown_config(apr_pool_t * p, char *dummy)
+static void *markdown_config_server_create(apr_pool_t *p, server_rec *s)
 {
-    markdown_conf *c =
-        (markdown_conf *) apr_pcalloc(p, sizeof(markdown_conf));
-    memset(c, 0, sizeof(markdown_conf));
-    c->doctype = HTML_4_01_TRANSITIONAL;
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "makedown_config_server_create(): started with%s server rec\n",
+        (s == NULL ? "out" : ""));
+
+    markdown_conf *c = (markdown_conf *) apr_pcalloc(p, sizeof(markdown_conf));
+
+    c->doctype   = HTML_4_01_TRANSITIONAL;
     c->mkd_flags = DEFAULT_MKD_FLAGS;
+    c->header    = NULL;
+    c->footer    = NULL;
+    c->css       = NULL;
+
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "makedown_config_server_create(): finished with%s server rec\n",
+        (s == NULL ? "out" : ""));
+
     return (void *) c;
+}
+
+static void *markdown_config_server_merge(apr_pool_t *p, void *parent, void *add)
+{
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "makedown_config_server_merge(): started with%s parent, with%s add\n",
+        (parent == NULL ? "out" : ""),
+        (add == NULL ? "out" : ""));
+
+    markdown_conf *c    = (markdown_conf *) apr_palloc(p, sizeof(markdown_conf));
+    markdown_conf *dir  = (markdown_conf *) add;
+    markdown_conf *base = (markdown_conf *) parent;
+
+    c->doctype   = ( dir->doctype   == HTML_UNSET ? base->doctype   : dir->doctype);
+    c->mkd_flags = ( dir->mkd_flags == 0          ? base->mkd_flags : dir->mkd_flags);
+    c->header    = ( dir->header    == NULL       ? base->header    : dir->header);
+    c->footer    = ( dir->footer    == NULL       ? base->footer    : dir->footer);
+    c->css       = ( dir->css       == NULL       ? base->css       : dir->css);
+
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "makedown_config_server_merge(): finished with%s parent, with%s add\n",
+        (parent == NULL ? "out" : ""),
+        (add == NULL ? "out" : ""));
+
+    return c;
+}
+
+static void *markdown_config_per_dir_create(apr_pool_t * p, char *context)
+{
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "makedown_config_per_dir_create(): started with%s context\n",
+        (context == NULL ? "out" : ""));
+
+    markdown_conf *c = (markdown_conf *) apr_pcalloc(p, sizeof(markdown_conf));
+
+    c->doctype   = HTML_UNSET;
+    c->mkd_flags = 0;
+    c->header    = NULL;
+    c->footer    = NULL;
+    c->css       = NULL;
+
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "makedown_config_per_dir_create(): finished with%s context\n",
+        (context == NULL ? "out" : ""));
+
+    return (void *) c;
+}
+
+static void *markdown_config_per_dir_merge(apr_pool_t * p, void *parent, void *add)
+{
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "makedown_config_per_dir_merge(): started with%s parent, with%s add\n",
+        (parent == NULL ? "out" : ""),
+        (add == NULL ? "out" : ""));
+
+    markdown_conf *c    = (markdown_conf *) apr_palloc(p, sizeof(markdown_conf));
+    markdown_conf *dir  = (markdown_conf *) add;
+    markdown_conf *base = (markdown_conf *) parent;
+
+    c->doctype   = ( dir->doctype   == HTML_UNSET ? base->doctype   : dir->doctype);
+    c->mkd_flags = ( dir->mkd_flags == 0          ? base->mkd_flags : dir->mkd_flags);
+    c->header    = ( dir->header    == NULL       ? base->header    : dir->header);
+    c->footer    = ( dir->footer    == NULL       ? base->footer    : dir->footer);
+    c->css       = ( dir->css       == NULL       ? base->css       : dir->css);
+
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, NULL, "makedown_config_per_dir_merge(): finished with%s parent, with%s add\n",
+        (parent == NULL ? "out" : ""),
+        (add == NULL ? "out" : ""));
+
+    return c;
 }
 
 static const char *set_markdown_doctype(cmd_parms * cmd, void *conf,
@@ -429,20 +676,19 @@ static const char *set_markdown_header(cmd_parms * cmd, void *conf,
 									   const char *arg)
 {
     markdown_conf *c = (markdown_conf *) conf;
+
     c->header = arg;
     return NULL;
 }
 
-static const char *set_markdown_footer(cmd_parms * cmd, void *conf,
-									   const char *arg)
+static const char *set_markdown_footer(cmd_parms * cmd, void *conf, const char *arg)
 {
     markdown_conf *c = (markdown_conf *) conf;
     c->footer = arg;
     return NULL;
 }
 
-static const char *set_markdown_flags(cmd_parms * cmd, void *conf,
-									   const char *arg)
+static const char *set_markdown_flags(cmd_parms * cmd, void *conf, const char *arg)
 {
     long int flags;
     markdown_conf *c = (markdown_conf *) conf;
@@ -468,10 +714,10 @@ static const command_rec markdown_cmds[] = {
                   "set Doctype"),
     AP_INIT_TAKE1("MarkdownCSS", set_markdown_css, NULL, OR_ALL,
                   "set CSS"),
-    AP_INIT_TAKE1("MarkdownHeaderHtml", set_markdown_header, NULL, OR_ALL,
-                  "set Header HTML"),
-    AP_INIT_TAKE1("MarkdownFooterHtml", set_markdown_footer, NULL, OR_ALL,
-                  "set Footer HTML"),
+    AP_INIT_TAKE1("MarkdownHeaderFile", set_markdown_header, NULL, OR_ALL,
+                  "set Header FILE"),
+    AP_INIT_TAKE1("MarkdownFooterFile", set_markdown_footer, NULL, OR_ALL,
+                  "set Footer FILE"),
     AP_INIT_TAKE1("MarkdownFlags", set_markdown_flags, NULL, OR_ALL,
                   "set Discount flags"),
     {NULL}
@@ -479,16 +725,17 @@ static const command_rec markdown_cmds[] = {
 
 static void markdown_register_hooks(apr_pool_t * p)
 {
-    ap_hook_handler(markdown_handler, NULL, NULL, APR_HOOK_MIDDLE);
+    ap_hook_check_config(markdown_hook_check_config, NULL, NULL, APR_HOOK_MIDDLE);
+    ap_hook_handler(markdown_hook_handler, NULL, NULL, APR_HOOK_MIDDLE);
 }
 
 /* Dispatch list for API hooks */
 module AP_MODULE_DECLARE_DATA markdown_module = {
     STANDARD20_MODULE_STUFF,
-    markdown_config,            /* create per-dir    config structures */
-    NULL,                       /* merge  per-dir    config structures */
-    NULL,                       /* create per-server config structures */
-    NULL,                       /* merge  per-server config structures */
-    markdown_cmds,              /* table of config file commands       */
-    markdown_register_hooks     /* register hooks                      */
+    markdown_config_per_dir_create,            /* create per-dir    config structures */
+    markdown_config_per_dir_merge,             /* merge  per-dir    config structures */
+    markdown_config_server_create,             /* create per-server config structures */
+    markdown_config_server_merge,              /* merge  per-server config structures */
+    markdown_cmds,                             /* table of config file commands       */
+    markdown_register_hooks                    /* register hooks                      */
 };
