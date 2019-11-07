@@ -63,6 +63,7 @@ typedef struct {
 } list_t;
 
 typedef struct {
+    unsigned int wrapper;
     doctype_t doctype;
     list_t *css;
     mkd_flag_t mkd_flags;
@@ -148,129 +149,133 @@ void markdown_output(MMIOT *doc, request_rec *r)
                                                   &markdown_module);
     mkd_compile(doc, conf->mkd_flags);
 
-    switch(conf->doctype){
-    case XHTML_5:
-    case XHTML_1_0_STRICT:
-    case XHTML_1_0_TRANSITIONAL:
-    case XHTML_1_0_FRAMESET:
-    case XHTML_1_1:
-    case XHTML_BASIC_1_0:
-    case XHTML_BASIC_1_1:
-        ap_rputs(XML_DECLARATION, r);
-        break;
-    default:
-        /* No XML declaration for HTML doctypes */
-        break;
-    }
+    if(conf->wrapper) {
+        switch(conf->doctype){
+        case XHTML_5:
+        case XHTML_1_0_STRICT:
+        case XHTML_1_0_TRANSITIONAL:
+        case XHTML_1_0_FRAMESET:
+        case XHTML_1_1:
+        case XHTML_BASIC_1_0:
+        case XHTML_BASIC_1_1:
+            ap_rputs(XML_DECLARATION, r);
+            break;
+        default:
+            /* No XML declaration for HTML doctypes */
+            break;
+        }
 
-    switch(conf->doctype){
-    case HTML_5:
-        ap_rputs(DTD_HTML_5, r);
-        break;
-    case XHTML_5:
-        ap_rputs(DTD_XHTML_5, r);
-        break;
-    case XHTML_1_0_STRICT:
-        ap_rputs(DTD_XHTML_1_0_STRICT, r);
-        break;
-    case XHTML_1_0_TRANSITIONAL:
-        ap_rputs(DTD_XHTML_1_0_TRANSITIONAL, r);
-        break;
-    case XHTML_1_0_FRAMESET:
-        ap_rputs(DTD_XHTML_1_0_FRAMESET, r);
-        break;
-    case XHTML_1_1:
-        ap_rputs(DTD_XHTML_1_1, r);
-        break;
-    case HTML_4_01_STRICT:
-        ap_rputs(DTD_HTML_4_01_STRICT, r);
-        break;
-    case HTML_4_01_TRANSITIONAL:
-        ap_rputs(DTD_HTML_4_01_TRANSITIONAL, r);
-        break;
-    case HTML_4_01_FRAMESET:
-        ap_rputs(DTD_HTML_4_01_FRAMESET, r);
-        break;
-    case XHTML_BASIC_1_0:
-        ap_rputs(DTD_XHTML_BASIC_1_0, r);
-        break;
-    case XHTML_BASIC_1_1:
-        ap_rputs(DTD_XHTML_BASIC_1_1, r);
-        break;
-    default:
-        /* Shouldn't be here */
-        break;
-    }
+        switch(conf->doctype){
+        case HTML_5:
+            ap_rputs(DTD_HTML_5, r);
+            break;
+        case XHTML_5:
+            ap_rputs(DTD_XHTML_5, r);
+            break;
+        case XHTML_1_0_STRICT:
+            ap_rputs(DTD_XHTML_1_0_STRICT, r);
+            break;
+        case XHTML_1_0_TRANSITIONAL:
+            ap_rputs(DTD_XHTML_1_0_TRANSITIONAL, r);
+            break;
+        case XHTML_1_0_FRAMESET:
+            ap_rputs(DTD_XHTML_1_0_FRAMESET, r);
+            break;
+        case XHTML_1_1:
+            ap_rputs(DTD_XHTML_1_1, r);
+            break;
+        case HTML_4_01_STRICT:
+            ap_rputs(DTD_HTML_4_01_STRICT, r);
+            break;
+        case HTML_4_01_TRANSITIONAL:
+            ap_rputs(DTD_HTML_4_01_TRANSITIONAL, r);
+            break;
+        case HTML_4_01_FRAMESET:
+            ap_rputs(DTD_HTML_4_01_FRAMESET, r);
+            break;
+        case XHTML_BASIC_1_0:
+            ap_rputs(DTD_XHTML_BASIC_1_0, r);
+            break;
+        case XHTML_BASIC_1_1:
+            ap_rputs(DTD_XHTML_BASIC_1_1, r);
+            break;
+        default:
+            /* Shouldn't be here */
+            break;
+        }
 
-    switch(conf->doctype){
-    case HTML_5:
-    case HTML_4_01_STRICT:
-    case HTML_4_01_TRANSITIONAL:
-    case HTML_4_01_FRAMESET:
-        ap_rputs("<html>\n", r);
-        break;
-    case XHTML_5:
-    case XHTML_1_0_STRICT:
-    case XHTML_1_0_TRANSITIONAL:
-    case XHTML_1_0_FRAMESET:
-    case XHTML_1_1:
-    case XHTML_BASIC_1_0:
-    case XHTML_BASIC_1_1:
-        ap_rputs("<html " ROOT_ELEMENT_HTML_ATTR_XMLNS ">\n", r);
-        break;
-    default:
-        /* Shouldn't be here */
-        break;
-    }
+        switch(conf->doctype){
+        case HTML_5:
+        case HTML_4_01_STRICT:
+        case HTML_4_01_TRANSITIONAL:
+        case HTML_4_01_FRAMESET:
+            ap_rputs("<html>\n", r);
+            break;
+        case XHTML_5:
+        case XHTML_1_0_STRICT:
+        case XHTML_1_0_TRANSITIONAL:
+        case XHTML_1_0_FRAMESET:
+        case XHTML_1_1:
+        case XHTML_BASIC_1_0:
+        case XHTML_BASIC_1_1:
+            ap_rputs("<html " ROOT_ELEMENT_HTML_ATTR_XMLNS ">\n", r);
+            break;
+        default:
+            /* Shouldn't be here */
+            break;
+        }
 
-    ap_rputs("<head>\n", r);
+        ap_rputs("<head>\n", r);
 
-    /* <meta> - HTML | MDN
-     * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta */
-    switch(conf->doctype){
-    case HTML_5:
-    case XHTML_5:
-        ap_rputs("<meta charset=\"utf-8\">\n", r);
-        break;
-    case HTML_4_01_STRICT:
-    case HTML_4_01_TRANSITIONAL:
-    case HTML_4_01_FRAMESET:
-        ap_rputs("<meta http-equiv=\"Content-Type\" content=\"text/html; "
-                 "charset=utf-8\">\n", r);
-        break;
-    case XHTML_1_0_STRICT:
-    case XHTML_1_0_TRANSITIONAL:
-    case XHTML_1_0_FRAMESET:
-    case XHTML_1_1:
-    case XHTML_BASIC_1_0:
-    case XHTML_BASIC_1_1:
-        /* Shouldn't needed as XML declaration already specifies Content-Type */
-        break;
-    default:
-        /* Shouldn't be here */
-        break;
-    }
+        /* <meta> - HTML | MDN
+         * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta */
+        switch(conf->doctype){
+        case HTML_5:
+        case XHTML_5:
+            ap_rputs("<meta charset=\"utf-8\">\n", r);
+            break;
+        case HTML_4_01_STRICT:
+        case HTML_4_01_TRANSITIONAL:
+        case HTML_4_01_FRAMESET:
+            ap_rputs("<meta http-equiv=\"Content-Type\" content=\"text/html; "
+                     "charset=utf-8\">\n", r);
+            break;
+        case XHTML_1_0_STRICT:
+        case XHTML_1_0_TRANSITIONAL:
+        case XHTML_1_0_FRAMESET:
+        case XHTML_1_1:
+        case XHTML_BASIC_1_0:
+        case XHTML_BASIC_1_1:
+            /* Shouldn't needed as XML declaration already specifies Content-Type */
+            break;
+        default:
+            /* Shouldn't be here */
+            break;
+        }
 
-    if (conf->css) {
-        ap_rputs("<meta http-equiv=\"Content-Style-Type\""
-                 " content=\"text/css\" />\n", r);
-		css = conf->css;
-		do{
-            ap_rprintf(r,
-                       "<link rel=\"stylesheet\" href=\"%s\""
-                       " type=\"text/css\" />\n",
-                       (char *)css->data);
-            css = (list_t *)css->next;
-		}while(css);
+        if (conf->css) {
+            ap_rputs("<meta http-equiv=\"Content-Style-Type\""
+                     " content=\"text/css\" />\n", r);
+            	css = conf->css;
+            	do{
+                ap_rprintf(r,
+                           "<link rel=\"stylesheet\" href=\"%s\""
+                           " type=\"text/css\" />\n",
+                           (char *)css->data);
+                css = (list_t *)css->next;
+            	}while(css);
+        }
     }
     title = mkd_doc_title(doc);
-    if (title) {
-        ap_rprintf(r, "<title>%s</title>\n", title);
-    }else{
-        ap_rprintf(r, "<title></title>\n");
+    if(conf->wrapper) {
+        if (title) {
+            ap_rprintf(r, "<title>%s</title>\n", title);
+        }else{
+            ap_rprintf(r, "<title></title>\n");
+        }
+        ap_rputs("</head>\n", r);
+        ap_rputs("<body>\n", r);
     }
-    ap_rputs("</head>\n", r);
-    ap_rputs("<body>\n", r);
 
     if (conf->header) {
         ap_rputs(conf->header, r);
@@ -290,8 +295,10 @@ void markdown_output(MMIOT *doc, request_rec *r)
         ap_rputc('\n', r);
     }
 
-    ap_rputs("</body>\n", r);
-    ap_rputs("</html>\n", r);
+    if(conf->wrapper) {
+        ap_rputs("</body>\n", r);
+        ap_rputs("</html>\n", r);
+    }
     mkd_cleanup(doc);
 }
 
@@ -375,7 +382,16 @@ static void *markdown_config(apr_pool_t * p, char *dummy)
     memset(c, 0, sizeof(markdown_conf));
     c->doctype = HTML_4_01_TRANSITIONAL;
     c->mkd_flags = DEFAULT_MKD_FLAGS;
+    c->wrapper = 1;
     return (void *) c;
+}
+
+static const char *set_markdown_wrapper(cmd_parms * cmd, void *conf,
+                                    int arg)
+{
+    markdown_conf *c = (markdown_conf *) conf;
+    c->wrapper = arg;
+    return NULL;
 }
 
 static const char *set_markdown_doctype(cmd_parms * cmd, void *conf,
@@ -476,6 +492,8 @@ static const char *set_markdown_flags(cmd_parms * cmd, void *conf,
 }
 
 static const command_rec markdown_cmds[] = {
+    AP_INIT_FLAG("MarkdownWrapper", set_markdown_wrapper, NULL, OR_ALL,
+                 "enable or disable HTML wrapper code output"),
     AP_INIT_TAKE1("MarkdownDoctype", set_markdown_doctype, NULL, OR_ALL,
                   "set Doctype"),
     AP_INIT_TAKE1("MarkdownCSS", set_markdown_css, NULL, OR_ALL,

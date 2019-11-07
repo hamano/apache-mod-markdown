@@ -50,6 +50,7 @@ LoadModule markdown_module /usr/lib/apache2/modules/mod_markdown.so
     # MarkdownCss style.css
     # MarkdownHeaderHtml "<p>Header</p>"
     # MarkdownFooterHtml "<p>Footer</p>"
+
 </Location>
 ~~~
 
@@ -59,6 +60,15 @@ Or:
 <Directory /var/www>
     AddHandler markdown .md
     DirectoryIndex index.md
+</Directory>
+~~~
+
+You can also disable HTML wrapper generation (basically `<html><head></head><body>` and `</body></html>` surrounding your actual markdown fragment) with this code :
+
+~~~
+<Directory /var/www>
+    AddHandler markdown .md
+    MarkdownWrapper Off
 </Directory>
 ~~~
 
