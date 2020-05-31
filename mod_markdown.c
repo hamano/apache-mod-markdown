@@ -344,6 +344,8 @@ static int markdown_doc_footer(request_rec *r, markdown_conf *conf)
         ap_rputs("</body>\n", r);
         ap_rputs("</html>\n", r);
     }
+
+	return OK;
 }
 
 /* The markdown handler */
