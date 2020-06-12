@@ -149,7 +149,7 @@ int markdown_output(MMIOT *doc, request_rec *r, markdown_conf *conf)
 
     mkd_compile(doc, conf->mkd_flags);
 
-    if (conf->headerfile == NULL && conf->footerfile == NULL) {
+    if (conf->headerfile == NULL) {
         result = markdown_doc_header(doc, r, conf);
     } else {
         result = markdown_doc_contents(r, "Header", conf->headerfile, COMMENT_END);
@@ -166,7 +166,7 @@ int markdown_output(MMIOT *doc, request_rec *r, markdown_conf *conf)
     /* Insert a new line just to be sure it's clean */
     ap_rputc('\n', r);
 
-    if (conf->headerfile == NULL && conf->footerfile == NULL) {
+    if (conf->footerfile == NULL) {
         result = markdown_doc_footer(r, conf);
     } else {
         result = markdown_doc_contents(r, "Footer", conf->footerfile, COMMENT_START);
