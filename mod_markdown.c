@@ -554,7 +554,7 @@ static const char *set_markdown_flags(cmd_parms * cmd, void *conf,
 
 static void *markdown_config_server_create(apr_pool_t *p, server_rec *s)
 {
-    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "makedown_config_server_create(): started with%s server rec",
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "markdown_config_server_create(): started with%s server rec",
         (s == NULL ? "out" : ""));
 
     markdown_conf *c = (markdown_conf *) apr_pcalloc(p, sizeof(markdown_conf));
@@ -568,7 +568,7 @@ static void *markdown_config_server_create(apr_pool_t *p, server_rec *s)
     c->footer     = NULL;
     c->css        = NULL;
 
-    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "makedown_config_server_create(): finished with%s server rec (%d)",
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "markdown_config_server_create(): finished with%s server rec (%d)",
         (s == NULL ? "out" : ""), c->doctype);
 
     return (void *) c;
@@ -576,7 +576,7 @@ static void *markdown_config_server_create(apr_pool_t *p, server_rec *s)
 
 static void *markdown_config_server_merge(apr_pool_t *p, void *BASE, void *ADD)
 {
-    ap_log_perror(APLOG_MARK, APLOG_DEBUG, 0, p, "makedown_config_server_merge(): started with%s BASE, with%s ADD",
+    ap_log_perror(APLOG_MARK, APLOG_DEBUG, 0, p, "markdown_config_server_merge(): started with%s BASE, with%s ADD",
         (BASE == NULL ? "out" : ""),
         (ADD  == NULL ? "out" : ""));
 
@@ -593,7 +593,7 @@ static void *markdown_config_server_merge(apr_pool_t *p, void *BASE, void *ADD)
     c->footer     = ( dir->footer     == NULL       ? base->footer     : dir->footer);
     c->css        = ( dir->css        == NULL       ? base->css        : dir->css);
 
-    ap_log_perror(APLOG_MARK, APLOG_DEBUG, 0, p, "makedown_config_server_merge(): finished with%s BASE, with%s ADD (%d = %d ? %d)",
+    ap_log_perror(APLOG_MARK, APLOG_DEBUG, 0, p, "markdown_config_server_merge(): finished with%s BASE, with%s ADD (%d = %d ? %d)",
         (BASE == NULL ? "out" : ""),
         (ADD  == NULL ? "out" : ""),
         c->doctype,
@@ -605,7 +605,7 @@ static void *markdown_config_server_merge(apr_pool_t *p, void *BASE, void *ADD)
 
 static void *markdown_config_per_dir_create(apr_pool_t * p, char *context)
 {
-    ap_log_perror(APLOG_MARK, APLOG_DEBUG, 0, p, "makedown_config_per_dir_create(): started with%s context",
+    ap_log_perror(APLOG_MARK, APLOG_DEBUG, 0, p, "markdown_config_per_dir_create(): started with%s context",
         (context == NULL ? "out" : ""));
 
     markdown_conf *c = (markdown_conf *) apr_pcalloc(p, sizeof(markdown_conf));
@@ -619,7 +619,7 @@ static void *markdown_config_per_dir_create(apr_pool_t * p, char *context)
     c->footer     = NULL;
     c->css        = NULL;
 
-    ap_log_perror(APLOG_MARK, APLOG_DEBUG, 0, p, "makedown_config_per_dir_create(): finished with%s context (%d)",
+    ap_log_perror(APLOG_MARK, APLOG_DEBUG, 0, p, "markdown_config_per_dir_create(): finished with%s context (%d)",
         (context == NULL ? "out" : ""), c->doctype);
 
     return (void *) c;
@@ -627,7 +627,7 @@ static void *markdown_config_per_dir_create(apr_pool_t * p, char *context)
 
 static void *markdown_config_per_dir_merge(apr_pool_t * p, void *BASE, void *ADD)
 {
-    ap_log_perror(APLOG_MARK, APLOG_DEBUG, 0, p, "makedown_config_per_dir_merge(): started with%s BASE, with%s ADD",
+    ap_log_perror(APLOG_MARK, APLOG_DEBUG, 0, p, "markdown_config_per_dir_merge(): started with%s BASE, with%s ADD",
         (BASE == NULL ? "out" : ""),
         (ADD == NULL ? "out" : ""));
 
@@ -644,7 +644,7 @@ static void *markdown_config_per_dir_merge(apr_pool_t * p, void *BASE, void *ADD
     c->footer     = ( dir->footer     == NULL       ? base->footer     : dir->footer);
     c->css        = ( dir->css        == NULL       ? base->css        : dir->css);
 
-    ap_log_perror(APLOG_MARK, APLOG_DEBUG, 0, p, "makedown_config_per_dir_merge(): finished with%s BASE, with%s ADD (%d = %d ? %d)",
+    ap_log_perror(APLOG_MARK, APLOG_DEBUG, 0, p, "markdown_config_per_dir_merge(): finished with%s BASE, with%s ADD (%d = %d ? %d)",
         (BASE == NULL ? "out" : ""),
         (ADD == NULL ? "out" : ""),
         c->doctype,
@@ -743,7 +743,7 @@ static int markdown_hook_check_config(apr_pool_t *pconf, apr_pool_t *plog,
 {
     markdown_conf *conf = (markdown_conf *) ap_get_module_config(s->module_config,
                                                                  &markdown_module);
-    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "markdown_hook_check_config: makedown_conf found? %s", (conf == NULL ? "false" : "true"));
+    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "markdown_hook_check_config: markdown_conf found? %s", (conf == NULL ? "false" : "true"));
     if (conf != NULL) {
         if (conf->headerfile != NULL && conf->footerfile != NULL) {
             if (!markdown_check_file_exists(NULL, s, "Header", conf->headerfile) ||
