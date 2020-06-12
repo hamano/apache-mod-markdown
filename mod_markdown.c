@@ -324,12 +324,6 @@ static int markdown_doc_header(MMIOT *doc, request_rec *r, markdown_conf *conf)
         ap_rprintf(r, "<h1 class=\"title\">%s</h1>\n", title);
     }
 
-    if ((size = mkd_document(doc, &p)) != EOF) {
-        ap_rwrite(p, size, r);
-    }
-
-    ap_rputc('\n', r);
-
     return OK;
 }
 
