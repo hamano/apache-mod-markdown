@@ -182,8 +182,6 @@ int markdown_output(MMIOT *doc, request_rec *r, markdown_conf *conf)
 
 static int markdown_doc_header(MMIOT *doc, request_rec *r, markdown_conf *conf)
 {
-    int size;
-    char *p;
     char *title;
     list_t *css;
 
