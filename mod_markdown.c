@@ -796,7 +796,7 @@ static void markdown_register_hooks(apr_pool_t * p)
 }
 
 /* Dispatch list for API hooks */
-module AP_MODULE_DECLARE_DATA markdown_module = {
+AP_DECLARE_MODULE(markdown) = {
     STANDARD20_MODULE_STUFF,
     markdown_config_per_dir_create,            /* create per-dir    config structures */
     markdown_config_per_dir_merge,             /* merge  per-dir    config structures */
