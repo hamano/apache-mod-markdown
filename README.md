@@ -64,6 +64,10 @@ Or:
 </Directory>
 ```
 
+### Configuration Options
+
+#### MarkdownWrapper
+
 You can also disable HTML wrapper generation (basically `<html><head></head><body>` and `</body></html>` surrounding your actual markdown fragment) with this code :
 
 ```xml
@@ -73,7 +77,42 @@ You can also disable HTML wrapper generation (basically `<html><head></head><bod
 </Directory>
 ```
 
-### MarkdownFlags
+#### MarkdownCss
+
+```xml
+<Location />
+    AddHandler markdown .md
+    MarkdownCss style.css
+</Location>
+```
+
+#### MarkdownDoctype
+
+* HTML_4_01_TRANSITIONAL (default option)
+* HTML_5
+* XHTML_5
+* XHTML_1_0_STRICT
+* XHTML_1_0_TRANSITIONAL
+* XHTML_1_0_FRAMESET
+* XHTML_1_1
+* HTML_4_01_STRICT
+* HTML_4_01_FRAMESET
+* XHTML_BASIC_1_0
+* XHTML_BASIC_1_1
+
+#### MarkdownHeaderHtml
+
+```xml
+MarkdownHeaderHtml "<p>Header</p>"
+```
+
+#### MarkdownFooterHtml
+
+```xml
+MarkdownFooterHtml "<p>Footer</p>"
+```
+
+#### MarkdownFlags
 
 ```code
 default: MKD_TOC | MKD_AUTOLINK | MKD_FENCEDCODE
