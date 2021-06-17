@@ -1,5 +1,4 @@
-mod_markdown
-============
+# mod_markdown
 
 [![Build Status](https://travis-ci.org/hamano/apache-mod-markdown.svg?branch=master)](https://travis-ci.org/hamano/apache-mod-markdown)
 
@@ -9,40 +8,42 @@ mod_markdown is Markdown filter module for Apache HTTPD Server.
 
 * discount
 
-  http://www.pell.portland.or.us/~orc/Code/discount/
+  <http://www.pell.portland.or.us/~orc/Code/discount/>
 
 For Debian/Ubuntu:
 
-~~~
+```bash
 # apt install build-essential libtool automake autoconf
 # apt install libmarkdown2-dev apache2 apache2-dev
-~~~
+```
 
 ## Build
 
-~~~
+```bash
 % autoreconf -f -i
 % ./configure --with-apxs=<APXS_PATH> --with-discount=<DISCOUNT_DIR>
 % make
 % make install
-~~~
+```
 
 Note: `<DISCOUNT_DIR>` is the directory that contains the include directory that contains mkdio.h
 Probably you need to specify --with-discount=/usr or --with-discount=/usr/local
 
 ## Configuration
+
 in httpd.conf:
 
-~~~
+```xml
 LoadModule markdown_module modules/mod_markdown.so
-~~~
+```
 
 You need to specify full path on debian or ubuntu.
-~~~
-LoadModule markdown_module /usr/lib/apache2/modules/mod_markdown.so
-~~~
 
-~~~
+```xml
+LoadModule markdown_module /usr/lib/apache2/modules/mod_markdown.so
+```
+
+```xml
 <Location />
     AddHandler markdown .md
 
@@ -52,28 +53,29 @@ LoadModule markdown_module /usr/lib/apache2/modules/mod_markdown.so
     # MarkdownFooterHtml "<p>Footer</p>"
 
 </Location>
-~~~
+```
 
 Or:
 
-~~~
+```xml
 <Directory /var/www>
     AddHandler markdown .md
     DirectoryIndex index.md
 </Directory>
-~~~
+```
 
 You can also disable HTML wrapper generation (basically `<html><head></head><body>` and `</body></html>` surrounding your actual markdown fragment) with this code :
 
-~~~
+```xml
 <Directory /var/www>
     AddHandler markdown .md
     MarkdownWrapper Off
 </Directory>
-~~~
+```
 
 ### MarkdownFlags
 
+```code
 default: MKD_TOC | MKD_AUTOLINK | MKD_FENCEDCODE
 
 Flag | Value | Description
@@ -110,4 +112,4 @@ MKD_STRICT       | 0x00000010 | disable SUPERSCRIPT, RELAXED_EMPHASIS
 MKD_TABSTOP      | 0x00020000 | expand tabs to 4 spaces
 MKD_TAGTEXT      | 0x00000020 | process text inside an html tag; no
 MKD_URLENCODEDANCHOR  | 0x10000000 | urlencode non-identifier chars instead of replacing with dots
-
+```
