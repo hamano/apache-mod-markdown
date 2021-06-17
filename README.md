@@ -112,6 +112,18 @@ MarkdownHeaderHtml "<p>Header</p>"
 MarkdownFooterHtml "<p>Footer</p>"
 ```
 
+#### MarkdownHeaderFile
+
+```xml
+MarkdownHeaderFile header.html
+```
+
+#### MarkdownFooterFile
+
+```xml
+MarkdownHeaderFile footer.html
+```
+
 #### MarkdownFlags
 
 ```code
