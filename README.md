@@ -49,9 +49,8 @@ LoadModule markdown_module /usr/lib/apache2/modules/mod_markdown.so
 
     # If you want to use stylesheet.
     # MarkdownCss style.css
-    # MarkdownHeaderHtml "<p>Header</p>"
-    # MarkdownFooterHtml "<p>Footer</p>"
-
+    # MarkdownHeader "<p>Header</p>"
+    # MarkdownFooter "<p>Footer</p>"
 </Location>
 ```
 
@@ -88,6 +87,10 @@ You can also disable HTML wrapper generation (basically `<html><head></head><bod
 
 #### MarkdownDoctype
 
+```xml
+MarkdownDoctype HTML_4_01_TRANSITIONAL
+```
+
 * HTML_4_01_TRANSITIONAL (default option)
 * HTML_5
 * XHTML_5
@@ -100,16 +103,16 @@ You can also disable HTML wrapper generation (basically `<html><head></head><bod
 * XHTML_BASIC_1_0
 * XHTML_BASIC_1_1
 
-#### MarkdownHeaderHtml
+#### MarkdownHeader
 
 ```xml
-MarkdownHeaderHtml "<p>Header</p>"
+MarkdownHeader "<p>Header</p>"
 ```
 
-#### MarkdownFooterHtml
+#### MarkdownFooter
 
 ```xml
-MarkdownFooterHtml "<p>Footer</p>"
+MarkdownFooter "<p>Footer</p>"
 ```
 
 #### MarkdownHeaderFile
@@ -121,10 +124,14 @@ MarkdownHeaderFile header.html
 #### MarkdownFooterFile
 
 ```xml
-MarkdownHeaderFile footer.html
+MarkdownFooterFile footer.html
 ```
 
 #### MarkdownFlags
+
+```xml
+MarkdownFlags 0x02005000
+```
 
 ```code
 default: MKD_TOC | MKD_AUTOLINK | MKD_FENCEDCODE
