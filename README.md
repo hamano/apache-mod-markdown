@@ -14,7 +14,7 @@ For Debian/Ubuntu:
 
 ```bash
 # apt install build-essential libtool automake autoconf
-# apt install libmarkdown2-dev apache2 apache2-dev
+# apt install libmarkdown2-dev libapr1 libapr1-dev apache2 apache2-dev
 ```
 
 ## Build
