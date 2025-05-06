@@ -475,7 +475,7 @@ static const char *set_markdown_css(cmd_parms * cmd, void *conf,
                                     const char *arg)
 {
     markdown_conf *c = (markdown_conf *) conf;
-    list_t *item = (list_t *)malloc(sizeof(list_t));
+    list_t *item = (list_t *)apr_palloc(cmd->pool, sizeof(list_t));
     item->data = arg;
     item->next = NULL;
 
