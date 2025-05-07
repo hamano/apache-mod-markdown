@@ -305,7 +305,7 @@ static int markdown_doc_header(MMIOT *doc, request_rec *r, markdown_conf *conf)
     title = mkd_doc_title(doc);
     if(conf->wrapper) {
         if (title) {
-            ap_rprintf(r, "<title>%s</title>\n", title);
+            ap_rprintf(r, "<title>%s</title>\n", ap_escape_html(r->pool, title));
         }else{
             ap_rprintf(r, "<title></title>\n");
         }
@@ -319,7 +319,7 @@ static int markdown_doc_header(MMIOT *doc, request_rec *r, markdown_conf *conf)
     }
 
     if (title) {
-        ap_rprintf(r, "<h1 class=\"title\">%s</h1>\n", title);
+        ap_rprintf(r, "<h1 class=\"title\">%s</h1>\n", ap_escape_html(r->pool, title));
     }
 
     return OK;
