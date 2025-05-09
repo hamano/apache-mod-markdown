@@ -646,11 +646,12 @@ static void *markdown_config_per_dir_merge(apr_pool_t * p, void *BASE, void *ADD
     return c;
 }
 
-static int markdown_check_file_exists(request_rec *r, server_rec *s, const char *section, const char *filename) {
+static int markdown_check_file_exists(request_rec *r, server_rec *s, apr_pool_t *pool, const char *section, const char *filename) {
     apr_finfo_t a_info;
     int rc, exists;
+    apr_pool_t *p = r ? r->pool : pool;
 
-    rc = apr_stat(&a_info, filename, APR_FINFO_MIN, r->pool);
+    rc = apr_stat(&a_info, filename, APR_FINFO_MIN, p);
     if (rc == APR_SUCCESS) {
         exists =
         (
@@ -688,7 +689,7 @@ static int markdown_doc_contents(request_rec *r, const char *section, const char
     apr_file_t  *a_file;
     //local_file = apr_pstrdup(r->pool, filename);
     /* Figure out if the file we request exists and isn't a directory */
-    rc = markdown_check_file_exists(r, NULL, section, filename);
+    rc = markdown_check_file_exists(r, NULL, NULL, section, filename);
     if (rc == OK) {
         if ((flags & COMMENT_START) == COMMENT_START) {
             ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "apache-mod-markdown->markdown_doc_contents(%s): header", section);
@@ -738,8 +739,8 @@ static int markdown_hook_check_config(apr_pool_t *pconf, apr_pool_t *plog,
     ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s, "markdown_hook_check_config: markdown_conf found? %s", (conf == NULL ? "false" : "true"));
     if (conf != NULL) {
         if (conf->headerfile != NULL && conf->footerfile != NULL) {
-            if (!markdown_check_file_exists(NULL, s, "Header", conf->headerfile) ||
-                !markdown_check_file_exists(NULL, s, "Footer", conf->footerfile)) {
+            if (!markdown_check_file_exists(NULL, s, pconf, "Header", conf->headerfile) ||
+                !markdown_check_file_exists(NULL, s, pconf, "Footer", conf->footerfile)) {
                 return DECLINED;
             }
             if (conf->css) {
