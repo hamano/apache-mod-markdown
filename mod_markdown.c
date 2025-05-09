@@ -297,7 +297,7 @@ static int markdown_doc_header(MMIOT *doc, request_rec *r, markdown_conf *conf)
                 ap_rprintf(r,
                            "<link rel=\"stylesheet\" href=\"%s\""
                            " type=\"text/css\" />\n",
-                           (char *)css->data);
+                           ap_escape_html(r->pool, (char *)css->data));
                 css = (list_t *)css->next;
             	}while(css);
         }
