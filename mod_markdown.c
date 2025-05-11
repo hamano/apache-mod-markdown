@@ -398,6 +398,7 @@ static int markdown_handler(request_rec *r)
         /* Shouldn't be here */
         ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, r,
                       "WARNING: DocType was not set as expected (%d)\n", conf->doctype);
+        r->content_type = "text/html";
         break;
     }
 
