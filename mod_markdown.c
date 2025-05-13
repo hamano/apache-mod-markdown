@@ -63,7 +63,7 @@ typedef struct {
 } list_t;
 
 typedef struct {
-    unsigned int wrapper;
+    int wrapper;
     doctype_t doctype;
     list_t *css;
     mkd_flag_t mkd_flags;
@@ -576,9 +576,9 @@ static void *markdown_config_server_merge(apr_pool_t *p, void *BASE, void *ADD)
     markdown_conf *dir  = (markdown_conf *) ADD;
     markdown_conf *base = (markdown_conf *) BASE;
 
-    c->wrapper    = ( dir->wrapper    == 0          ? base->wrapper    : dir->wrapper);
+    c->wrapper    = ( dir->wrapper    == -1         ? base->wrapper    : dir->wrapper);
     c->doctype    = ( dir->doctype    == HTML_UNSET ? base->doctype    : dir->doctype);
-    c->mkd_flags  = ( dir->mkd_flags  == 0          ? base->mkd_flags  : dir->mkd_flags);
+    c->mkd_flags  = ( dir->mkd_flags  == -1         ? base->mkd_flags  : dir->mkd_flags);
     c->headerfile = ( dir->headerfile == NULL       ? base->headerfile : dir->headerfile);
     c->footerfile = ( dir->footerfile == NULL       ? base->footerfile : dir->footerfile);
     c->header     = ( dir->header     == NULL       ? base->header     : dir->header);
@@ -602,9 +602,9 @@ static void *markdown_config_per_dir_create(apr_pool_t * p, char *context)
 
     markdown_conf *c = (markdown_conf *) apr_pcalloc(p, sizeof(markdown_conf));
 
-    c->wrapper    = 0;
+    c->wrapper    = -1;
     c->doctype    = HTML_UNSET;
-    c->mkd_flags  = 0;
+    c->mkd_flags  = -1;
     c->headerfile = NULL;
     c->footerfile = NULL;
     c->header     = NULL;
@@ -627,9 +627,9 @@ static void *markdown_config_per_dir_merge(apr_pool_t * p, void *BASE, void *ADD
     markdown_conf *dir  = (markdown_conf *) ADD;
     markdown_conf *base = (markdown_conf *) BASE;
 
-    c->wrapper    = ( dir->wrapper    == 0          ? base->wrapper    : dir->wrapper);
+    c->wrapper    = ( dir->wrapper    == -1         ? base->wrapper    : dir->wrapper);
     c->doctype    = ( dir->doctype    == HTML_UNSET ? base->doctype    : dir->doctype);
-    c->mkd_flags  = ( dir->mkd_flags  == 0          ? base->mkd_flags  : dir->mkd_flags);
+    c->mkd_flags  = ( dir->mkd_flags  == -1         ? base->mkd_flags  : dir->mkd_flags);
     c->headerfile = ( dir->headerfile == NULL       ? base->headerfile : dir->headerfile);
     c->footerfile = ( dir->footerfile == NULL       ? base->footerfile : dir->footerfile);
     c->header     = ( dir->header     == NULL       ? base->header     : dir->header);
