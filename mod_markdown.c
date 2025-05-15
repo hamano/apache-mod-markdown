@@ -57,7 +57,7 @@ typedef enum {
     HTML_4_01_FRAMESET, XHTML_BASIC_1_0, XHTML_BASIC_1_1, HTML_UNSET = -1
 } doctype_t;
 
-typedef struct {
+typedef struct list_t {
     const void *data;
     struct list_t *next;
 } list_t;
