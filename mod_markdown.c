@@ -703,6 +703,7 @@ static int markdown_doc_contents(request_rec *r, const char *section, const char
             while (apr_file_read(a_file, buffer, &a_size) == APR_SUCCESS) {
                 ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "apache-mod-markdown->markdown_doc_contents(%s): other read", section);
                 ap_rwrite(buffer, a_size, r);
+                a_size = sizeof(buffer);
             }
             if ((flags & COMMENT_END) == COMMENT_END) {
                 ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, r, "apache-mod-markdown->markdown_doc_contents(%s): footer", section);
