@@ -73,7 +73,6 @@ typedef struct {
     const char *footerfile;
 } markdown_conf;
 
-#define P(s) ap_rputs(s, r)
 #ifdef MKD_FENCEDCODE
 #define DEFAULT_MKD_FLAGS (MKD_TOC | MKD_AUTOLINK | MKD_FENCEDCODE)
 #else
