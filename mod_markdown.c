@@ -36,10 +36,10 @@
 **
 **    The sample page from mod_markdown.c
 */
-#include "stdlib.h"
-#include "limits.h"
+#include <stdlib.h>
+#include <limits.h>
 
-#include "strings.h"
+#include <strings.h>
 
 #include "httpd.h"
 #include "http_config.h"
