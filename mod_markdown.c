@@ -682,7 +682,7 @@ static int markdown_check_file_exists(request_rec *r, server_rec *s, apr_pool_t 
 
 static int markdown_doc_contents(request_rec *r, const char *section, const char *filename, enum COMMENT_FLAGS flags)
 {
-    int rc, exists;
+    int rc;
     char buffer[256];
     apr_size_t  a_size;
     apr_file_t  *a_file;
