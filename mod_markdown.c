@@ -184,8 +184,8 @@ static int markdown_doc_header(MMIOT *doc, request_rec *r, markdown_conf *conf)
     char *title;
     list_t *css;
 
-    if(conf->wrapper) {
-        switch(conf->doctype){
+    if (conf->wrapper) {
+        switch (conf->doctype) {
         case XHTML_5:
         case XHTML_1_0_STRICT:
         case XHTML_1_0_TRANSITIONAL:
@@ -200,7 +200,7 @@ static int markdown_doc_header(MMIOT *doc, request_rec *r, markdown_conf *conf)
             break;
         }
 
-        switch(conf->doctype){
+        switch (conf->doctype) {
         case HTML_5:
             ap_rputs(DTD_HTML_5, r);
             break;
@@ -239,7 +239,7 @@ static int markdown_doc_header(MMIOT *doc, request_rec *r, markdown_conf *conf)
             break;
         }
 
-        switch(conf->doctype){
+        switch (conf->doctype) {
         case HTML_5:
         case HTML_4_01_STRICT:
         case HTML_4_01_TRANSITIONAL:
@@ -264,7 +264,7 @@ static int markdown_doc_header(MMIOT *doc, request_rec *r, markdown_conf *conf)
 
         /* <meta> - HTML | MDN
          * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta */
-        switch(conf->doctype){
+        switch (conf->doctype) {
         case HTML_5:
         case XHTML_5:
             ap_rputs("<meta charset=\"utf-8\">\n", r);
@@ -298,14 +298,14 @@ static int markdown_doc_header(MMIOT *doc, request_rec *r, markdown_conf *conf)
                            " type=\"text/css\" />\n",
                            ap_escape_html(r->pool, (char *)css->data));
                 css = (list_t *)css->next;
-            	}while(css);
+            	} while (css);
         }
     }
     title = mkd_doc_title(doc);
-    if(conf->wrapper) {
+    if (conf->wrapper) {
         if (title) {
             ap_rprintf(r, "<title>%s</title>\n", ap_escape_html(r->pool, title));
-        }else{
+        } else {
             ap_rprintf(r, "<title></title>\n");
         }
         ap_rputs("</head>\n", r);
@@ -331,7 +331,7 @@ static int markdown_doc_footer(request_rec *r, markdown_conf *conf)
         ap_rputc('\n', r);
     }
 
-    if(conf->wrapper) {
+    if (conf->wrapper) {
         ap_rputs("</body>\n", r);
         ap_rputs("</html>\n", r);
     }
@@ -377,7 +377,7 @@ static int markdown_handler(request_rec *r)
         }
     }
 
-    switch(conf->doctype){
+    switch (conf->doctype) {
     case HTML_5:
     case HTML_4_01_STRICT:
     case HTML_4_01_TRANSITIONAL:
@@ -434,29 +434,29 @@ static const char *set_markdown_doctype(cmd_parms * cmd, void *conf,
                                     const char *arg)
 {
     markdown_conf *c = (markdown_conf *) conf;
-    if(!strcmp(arg, "HTML_5")){
+    if (!strcmp(arg, "HTML_5")) {
         c->doctype = HTML_5;
-    }else if(!strcmp(arg, "XHTML_5")){
+    } else if (!strcmp(arg, "XHTML_5")) {
         c->doctype = XHTML_5;
-    }else if(!strcmp(arg, "XHTML_1_0_STRICT")){
+    } else if (!strcmp(arg, "XHTML_1_0_STRICT")) {
         c->doctype = XHTML_1_0_STRICT;
-    }else if(!strcmp(arg, "XHTML_1_0_TRANSITIONAL")){
+    } else if (!strcmp(arg, "XHTML_1_0_TRANSITIONAL")) {
         c->doctype = XHTML_1_0_TRANSITIONAL;
-    }else if(!strcmp(arg, "XHTML_1_0_FRAMESET")){
+    } else if (!strcmp(arg, "XHTML_1_0_FRAMESET")) {
         c->doctype = XHTML_1_0_FRAMESET;
-    }else if(!strcmp(arg, "XHTML_1_1")){
+    } else if (!strcmp(arg, "XHTML_1_1")) {
         c->doctype = XHTML_1_1;
-    }else if(!strcmp(arg, "HTML_4_01_STRICT")){
+    } else if (!strcmp(arg, "HTML_4_01_STRICT")) {
         c->doctype = HTML_4_01_STRICT;
-    }else if(!strcmp(arg, "HTML_4_01_TRANSITIONAL")){
+    } else if (!strcmp(arg, "HTML_4_01_TRANSITIONAL")) {
         c->doctype = HTML_4_01_TRANSITIONAL;
-    }else if(!strcmp(arg, "HTML_4_01_FRAMESET")){
+    } else if (!strcmp(arg, "HTML_4_01_FRAMESET")) {
         c->doctype = HTML_4_01_FRAMESET;
-    }else if(!strcmp(arg, "XHTML_BASIC_1_0")){
+    } else if (!strcmp(arg, "XHTML_BASIC_1_0")) {
         c->doctype = XHTML_BASIC_1_0;
-    }else if(!strcmp(arg, "XHTML_BASIC_1_1")){
+    } else if (!strcmp(arg, "XHTML_BASIC_1_1")) {
         c->doctype = XHTML_BASIC_1_1;
-    }else{
+    } else {
         /* Unknown value, set doctype to the least strict default */
         ap_log_error(APLOG_MARK, APLOG_WARNING, 0, NULL, "apache-mod-markdown: Doctype \"%s\" "
                      "unknown, setting to HTML 4.01 Transitional.\n", arg);
@@ -479,11 +479,11 @@ static const char *set_markdown_css(cmd_parms * cmd, void *conf,
     item->next = NULL;
 
     list_t *tail;
-    if(c->css){
+    if (c->css) {
         tail = c->css;
-        while(tail->next) tail = (list_t *)tail->next;
+        while (tail->next) tail = (list_t *)tail->next;
         tail->next = (struct list_t *)item;
-    }else{
+    } else {
         c->css = item;
     }
     return NULL;
@@ -528,7 +528,7 @@ static const char *set_markdown_flags(cmd_parms * cmd, void *conf,
     markdown_conf *c = (markdown_conf *) conf;
 
     flags = strtol(arg, NULL, 0);
-    if(flags < 0 || flags > UINT_MAX){
+    if (flags < 0 || flags > UINT_MAX) {
         /* Currently mkd_flag_t is an unsigned integer */
 
         /* Invalid(out of range) flag, setting flag to the
@@ -537,7 +537,7 @@ static const char *set_markdown_flags(cmd_parms * cmd, void *conf,
                      "invalid, setting to default value \"%#X\".\n",
                      flags, DEFAULT_MKD_FLAGS);
         c->mkd_flags = DEFAULT_MKD_FLAGS;
-    }else{
+    } else {
         c->mkd_flags = flags;
     }
     return NULL;
