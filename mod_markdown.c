@@ -140,6 +140,11 @@ typedef struct {
 
 #include "mod_markdown.h"
 
+static int markdown_doc_header(MMIOT *doc, request_rec *r, markdown_conf *conf);
+static int markdown_doc_footer(request_rec *r, markdown_conf *conf);
+static int markdown_doc_contents(request_rec *r, const char *section, const char *filename, enum COMMENT_FLAGS flags);
+static void *markdown_config_per_dir_merge(apr_pool_t *p, void *BASE, void *ADD);
+
 int markdown_output(MMIOT *doc, request_rec *r, markdown_conf *conf)
 {
     int size;
